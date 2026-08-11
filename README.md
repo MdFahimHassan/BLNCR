@@ -2,7 +2,7 @@
 
 **Split group expenses fairly. Settle up with the fewest possible payments.**
 
-BLNCR is a full-stack expense-splitting application for roommates, trips, and shared households. Unlike a basic "who owes what" tracker, BLNCR computes the *minimum number of transactions* needed to settle an entire group — turning a tangled web of debts into a short, clean payment list.
+BLNCR (Balancer) is a full-stack expense-splitting application for roommates, trips, and shared households. Unlike a basic "who owes what" tracker, BLNCR computes the *minimum number of transactions* needed to settle an entire group — turning a tangled web of debts into a short, clean payment list.
 
 >  **Status:** Actively in development. This README will be updated as features ship. See the [Roadmap](#roadmap) for what's built and what's next.
 
