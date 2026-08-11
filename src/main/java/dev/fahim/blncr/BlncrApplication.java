@@ -1,0 +1,13 @@
+package dev.fahim.blncr;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class BlncrApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(BlncrApplication.class, args);
+	}
+
+}
