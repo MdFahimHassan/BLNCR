@@ -11,7 +11,7 @@ A group expense-splitting app (Splitwise-style) — chosen because it has real a
 
 ### Roadmap (7 phases)
 1. **Scope & data model** ✅ Done
-2. **Backend foundation** 🔄 In progress (this is where we are)
+2. **Backend foundation** ✅ Done
 3. **Expense & split logic** — equal/exact/percentage splits, balance calc, debt-simplification algorithm
 4. **Frontend build** — React + Tailwind
 5. **Testing** — JUnit + Mockito
@@ -57,14 +57,14 @@ Located in `src/main/java/dev/fahim/blncr/entity/`:
 ### Folder Structure
 ```
 src/main/java/dev/fahim/blncr/
-├── config/
-├── controller/     (empty so far)
-├── dto/            (empty so far)
-├── entity/         ✅ 7 files done
-├── exception/      (empty so far)
-├── repository/     (not started)
-├── security/       (not started)
-└── service/        (empty so far)
+├── config/         ✅ SecurityConfig, ApplicationConfig
+├── controller/     ✅ AuthController, GroupController, UserController
+├── dto/            ✅ Request/Response DTOs (Auth, User, Group)
+├── entity/         ✅ 7 entity files
+├── exception/      ✅ GlobalExceptionHandler, Custom Exceptions
+├── repository/     ✅ UserRepository, GroupRepository, GroupMemberRepository, etc.
+├── security/       ✅ JwtUtils, JwtAuthenticationFilter, UserDetailsService
+└── service/        ✅ AuthService, GroupService, UserService
 ```
 
 ### Local Environment Setup
@@ -94,16 +94,22 @@ src/main/java/dev/fahim/blncr/
 3. **Port 8080 and 8081 are inside Windows' hidden TCP excluded port ranges** (checked via `netsh interface ipv4 show excludedportrange protocol=tcp`) — these ranges are often reserved by Hyper-V/WSL2 (which Docker Desktop uses) and silently block binding even when `netstat` shows the port as free. **Solution: app now runs on port 9090**, which is outside all excluded ranges on this machine. If future port conflicts happen, check excluded ranges first before troubleshooting anything else.
 4. Zombie `java.exe` processes from previous `spring-boot:run` sessions can linger and hold ports after Ctrl+C — clear with `Get-Process java | Stop-Process -Force` (careful: don't kill VS Code's own `redhat.java` language server process, which is separate and needed for IDE features).
 
-### Current State (as of last session)
-✅ App boots cleanly, connects to Postgres, all 6 tables auto-created via Hibernate (`users`, `groups`, `group_members`, `expenses`, `expense_splits`, `settlements`).
-✅ Confirmed working at `http://localhost:9090` — currently shows Spring Security's default login page (expected, since no custom security config or endpoints exist yet).
+✅ Phase 2 Completed: App boots cleanly, fully handles User Authentication (Register/Login via JWT), secures endpoints, handles custom exceptions, and provides Group creation & management endpoints.
+
+✅ Verified endpoints end-to-end:
+
+- POST /api/auth/register & POST /api/auth/login
+
+- GET /api/users/me
+
+- POST /api/groups & POST /api/groups/{id}/members
 
 ### Next Steps (immediate)
-1. Build `UserRepository` (Spring Data JPA interface)
-2. Build `POST /api/auth/register` endpoint
-3. Build `POST /api/auth/login` endpoint returning a JWT
-4. Configure Spring Security to open up `/api/auth/**` while protecting everything else
-5. Once auth works, move to Phase 3: expense & split logic (the algorithmic core of the app)
+1. Move to Phase 3: Expense & Split Logic
+2. Build ExpenseRepository and ExpenseSplitRepository
+3. Implement POST /api/groups/{id}/expenses for EQUAL splits (handling precision & remainder distribution   using BigDecimal)
+4. Extend split strategies for EXACT and PERCENTAGE split algorithms
+5. Implement the balance calculation service and debt simplification algorithm
 
 ---
 
@@ -114,22 +120,22 @@ src/main/java/dev/fahim/blncr/
 - Designed entity relationships
 - Chose BLNCR as project name
 
-### Phase 2 — Backend Foundation 🔄 IN PROGRESS
+### Phase 2 — Backend Foundation ✅ DONE
 - [x] Spring Boot project setup (Maven, Java 21)
 - [x] PostgreSQL running locally via Docker
 - [x] All 6 JPA entities created and verified (tables auto-created)
 - [x] Confirmed app boots cleanly on port 9090
-- [ ] `UserRepository`, `GroupRepository`, etc. (Spring Data JPA interfaces)
-- [ ] DTOs for register/login requests & responses
-- [ ] Password hashing (BCrypt via Spring Security)
-- [ ] `POST /api/auth/register` endpoint
-- [ ] `POST /api/auth/login` endpoint — returns JWT
-- [ ] JWT utility class (generate + validate tokens)
-- [ ] JWT filter (intercepts requests, validates token)
-- [ ] Spring Security config — open `/api/auth/**`, protect everything else
-- [ ] Global exception handler (`@ControllerAdvice`) for clean error responses
-- [ ] Basic `GET /api/users/me` endpoint to test auth end-to-end
-- [ ] Group endpoints: create group, add member, list my groups
+- [x] `UserRepository`, `GroupRepository`, etc. (Spring Data JPA interfaces)
+- [x] DTOs for register/login requests & responses
+- [x] Password hashing (BCrypt via Spring Security)
+- [x] `POST /api/auth/register` endpoint
+- [x] `POST /api/auth/login` endpoint — returns JWT
+- [x] JWT utility class (generate + validate tokens)
+- [x] JWT filter (intercepts requests, validates token)
+- [x] Spring Security config — open `/api/auth/**`, protect everything else
+- [x] Global exception handler (`@ControllerAdvice`) for clean error responses
+- [x] Basic `GET /api/users/me` endpoint to test auth end-to-end
+- [x] Group endpoints: create group, add member, list my groups
 
 ### Phase 3 — Expense & Split Logic (the algorithmic core)
 This is the phase that makes BLNCR more than a CRUD app — most portfolio value lives here.
@@ -184,6 +190,3 @@ This is the phase that makes BLNCR more than a CRUD app — most portfolio value
 - [ ] Clean commit history (squash noisy WIP commits if needed)
 - [ ] Add to portfolio site with a dedicated project write-up
 - [ ] (Optional stretch, post-v1) Pick 1-2 stretch features to add later: recurring expenses, multi-currency, receipt uploads, category charts — shows the project evolving over time, which itself is a good signal
-
----
-*Use this file as context when resuming work in a new conversation — it captures all key decisions, current file/folder state, environment fixes, and the full phase-by-phase roadmap so far.*
