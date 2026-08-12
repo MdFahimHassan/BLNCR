@@ -80,9 +80,9 @@ npm run dev
 
 - [x] Data model & entity design
 - [x] Backend foundation (Spring Boot + PostgreSQL + JPA)
-- [ ] JWT authentication (register/login)
-- [ ] Expense & split logic
-- [ ] **Debt simplification algorithm**
+- [x] JWT authentication (register/login)
+- [x] Expense & split logic
+- [x] **Debt simplification algorithm**
 - [ ] React frontend
 - [ ] Automated test suite (JUnit + Mockito)
 - [ ] Dockerized deployment + CI pipeline
