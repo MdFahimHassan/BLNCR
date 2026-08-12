@@ -104,12 +104,29 @@ src/main/java/dev/fahim/blncr/
 
 - POST /api/groups & POST /api/groups/{id}/members
 
+✅ Phase 3 Completed: Expense & split logic, balance calculation, debt simplification, settlements, and activity feed all implemented.
+
+**New files added:**
+- `repository/ExpenseRepository.java` (was missing — needed for the expense list/lookup)
+- `exception/InvalidRequestException.java` — 400 for business-rule violations (splits don't sum right, duplicate split participant, settling with yourself, etc.), wired into `GlobalExceptionHandler`
+- `service/GroupAccessService.java` — shared "does this group exist / is this user a member" helper used by all the Phase 3 services
+- `service/SplitCalculator.java` — the algorithmic core: EQUAL / EXACT / PERCENTAGE split math done in **integer cents** (not raw BigDecimal division) so remainders are distributed deterministically and splits always sum exactly to the total. PERCENTAGE uses the largest-remainder method so leftover cents go to the biggest fractional share, not just whoever's listed first.
+- `service/ExpenseService.java` — `POST/GET /api/groups/{id}/expenses`
+- `service/BalanceService.java` — `GET /api/groups/{id}/balances`, includes the **debt-simplification algorithm** (greedy largest-creditor/largest-debtor matching) that returns the minimum-transaction settle-up plan
+- `service/SettlementService.java` — `POST/GET /api/groups/{id}/settlements`
+- `service/ActivityService.java` — `GET /api/groups/{id}/activity`, merges expenses + settlements chronologically
+- Matching DTOs: `CreateExpenseRequest`, `ExpenseSplitInput`, `ExpenseResponse`, `ExpenseSplitResponse`, `BalanceResponse`, `SettlementSuggestion`, `GroupBalancesResponse`, `CreateSettlementRequest`, `SettlementResponse`, `ActivityItem`
+- Matching controllers: `ExpenseController`, `BalanceController`, `SettlementController`, `ActivityController`
+
+**Design notes for later reference:**
+- Split math avoids `BigDecimal.divide` giving non-terminating/lossy splits by converting to integer cents first, splitting the cents, then converting back — this is the standard fix for "split $100 three ways" style bugs.
+- Debt simplification is the greedy "settle the biggest debt with the biggest credit first" heuristic. It's not provably optimal in the general case (true minimum-transaction account balancing is NP-hard), but it's the accepted portfolio-project approach and produces a clean, small transaction list — mention the NP-hard caveat in the README when writing up Phase 7.
+- `GroupAccessService` was added to avoid duplicating the "group exists / user is a member" checks across 4 new services (the pattern `GroupService` already had inline, factored out since more services now need it). `GroupService` itself was left untouched.
+- Settlement recording is deliberately flexible (`fromUserId` + `toUserId`, both just need to be group members) rather than hardcoded to "the logged-in user paid" — closer to real-world use where anyone can log that a settlement happened.
+
 ### Next Steps (immediate)
-1. Move to Phase 3: Expense & Split Logic
-2. Build ExpenseRepository and ExpenseSplitRepository
-3. Implement POST /api/groups/{id}/expenses for EQUAL splits (handling precision & remainder distribution   using BigDecimal)
-4. Extend split strategies for EXACT and PERCENTAGE split algorithms
-5. Implement the balance calculation service and debt simplification algorithm
+1. Unit-test the split/balance/debt-simplification logic now (per the Phase 3 checklist) rather than waiting for Phase 5 — it's the highest-value and trickiest code in the project.
+2. Move to Phase 4: Frontend Build (React + Tailwind, Vite)
 
 ---
 

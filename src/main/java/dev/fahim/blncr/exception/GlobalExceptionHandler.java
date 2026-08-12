@@ -33,6 +33,12 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(HttpStatus.FORBIDDEN.value(), "Forbidden", ex.getMessage()));
     }
 
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleInvalidRequest(InvalidRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage()));
+    }
+
     @ExceptionHandler({InvalidCredentialsException.class, BadCredentialsException.class, AuthenticationException.class})
     public ResponseEntity<ApiError> handleAuthFailure(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
