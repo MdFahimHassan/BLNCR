@@ -12,8 +12,8 @@ A group expense-splitting app (Splitwise-style) — chosen because it has real a
 ### Roadmap (7 phases)
 1. **Scope & data model** ✅ Done
 2. **Backend foundation** ✅ Done
-3. **Expense & split logic** — equal/exact/percentage splits, balance calc, debt-simplification algorithm
-4. **Frontend build** — React + Tailwind
+3. **Expense & split logic** ✅ Done — equal/exact/percentage splits, balance calc, debt-simplification algorithm
+4. **Frontend build** ✅ Done — React + Tailwind
 5. **Testing** — JUnit + Mockito
 6. **Dockerize & deploy** — Docker, GitHub Actions CI, Railway/Render + Vercel
 7. **Polish for recruiters** — architecture diagram, README, demo, live link
@@ -130,6 +130,39 @@ src/main/java/dev/fahim/blncr/
 
 ---
 
+✅ Phase 4 Completed: Full React frontend built and wired to every Phase 2/3 endpoint — auth, groups, expenses (all 3 split types), balances, settle-up, activity feed, members.
+
+**Stack chosen:**
+- Vite + React 19, React Router 7, Axios
+- Tailwind CSS v4 (CSS-first `@theme` config, no `tailwind.config.js` needed)
+- `@phosphor-icons/react` for icons
+- Self-hosted `@fontsource/geist-sans` + `@fontsource/geist-mono` (no Google Fonts CDN dependency)
+
+**New directory:** `frontend/` (sibling to `src/`, own `package.json`)
+- `src/api/client.js` — Axios instance; attaches JWT from `localStorage` on every request, normalizes backend `ApiError` shape into a single message, force-logs-out on 401
+- `src/api/endpoints.js` — one function per backend endpoint, grouped by resource (auth, users, groups, expenses, balances, settlements, activity)
+- `src/context/AuthContext.jsx` — holds `user`/token, exposes `login`/`register`/`logout`, persists to `localStorage`
+- `src/context/ToastContext.jsx` — lightweight toast queue for success/error feedback (no external toast lib)
+- `src/lib/format.js` — currency/date/initials formatting helpers
+- `src/components/` — `Button`, `Field`/`Input`/`Select`, `Avatar`, `Modal`, `Feedback` (spinner/empty-state), `AppShell`, `ProtectedRoute`, `GroupCard`, `CreateGroupModal`, `AddExpenseModal`, `AddMemberModal`, `ExpenseList`, `LedgerBar`, `BalancesTab`, `SettleUpModal`, `ActivityFeed`, `MembersTab`
+- `src/pages/` — `LoginPage`, `RegisterPage`, `DashboardPage` (groups grid), `GroupPage` (tabbed group workspace: Expenses / Balances / Activity / Members)
+- `src/App.jsx` — routing (`/login`, `/register`, `/`, `/groups/:id`) + provider tree; `ProtectedRoute` redirects unauthenticated users, `AuthRedirect` keeps logged-in users off the auth pages
+
+**Design notes for later reference:**
+- Visual direction: dark "ledger" aesthetic — near-black surfaces, Geist Sans for UI text, **Geist Mono for every monetary figure** (`.ledger-figure` utility class, tabular nums) so amounts always align like a real ledger. Signature accent is a lime (`--color-accent`, `#d7ff3e`) reserved only for primary actions/branding, kept deliberately separate from the semantic credit/debit colors (green/rose) used for balance polarity so the two meanings never collide.
+- Signature UI element: `LedgerBar` — a diverging bar chart (green right / rose left from a center zero-line) on the Balances tab, trading-tape style, so net position across the group reads at a glance. Bar length is proportional to the largest `|balance|` in the group.
+- `AddExpenseModal` implements the full split-type calculator client-side: EQUAL just needs participant checkboxes; EXACT/PERCENTAGE show a per-member input with a live running-total vs. target check (turns green/rose) and a "Split evenly" auto-fill button that mirrors the backend's largest-remainder cent distribution so the UI won't produce a total the backend then rejects.
+- There's no `GET /api/groups/{id}` single-group endpoint on the backend, so `GroupPage` re-fetches `groupApi.list()` and finds the matching group client-side for the header/title — fine at this scale, worth adding a dedicated endpoint if the groups list ever gets large.
+- `localStorage` is used for the JWT/user here deliberately — this is a real standalone app (not a Claude artifact), so browser storage is appropriate, unlike the artifact-storage restriction that applies elsewhere.
+- Verified with `npm run build` (clean, 0 errors) and `npm run lint` (oxlint — 0 errors, only 3 expected "fast-refresh" style warnings from files that export a hook + helper alongside a provider component, which is intentional here).
+- `.env.example` added — `VITE_API_BASE_URL` (defaults to `http://localhost:9090`), so pointing at a deployed backend in Phase 6 is a one-line change.
+
+### Next Steps (immediate)
+1. Run the backend locally (`./mvnw spring-boot:run`) and the frontend (`cd frontend && npm install && npm run dev`) together and click through the full flow once: register → create group → add member → add expense (try all 3 split types) → balances → settle up → activity feed.
+2. Move to Phase 5: Testing (JUnit + Mockito for the Phase 3 services, especially split/balance/debt-simplification).
+
+---
+
 ## FULL ROADMAP — ALL 7 PHASES IN DETAIL
 
 ### Phase 1 — Scope & Data Model ✅ DONE
@@ -156,30 +189,30 @@ src/main/java/dev/fahim/blncr/
 
 ### Phase 3 — Expense & Split Logic (the algorithmic core)
 This is the phase that makes BLNCR more than a CRUD app — most portfolio value lives here.
-- [ ] `POST /api/groups/{id}/expenses` — add an expense
-- [ ] Split calculation logic:
+- [x] `POST /api/groups/{id}/expenses` — add an expense
+- [x] Split calculation logic:
   - EQUAL — divide amount evenly among selected members (handle rounding remainders correctly, e.g. splitting 100 among 3 people)
   - EXACT — each member specifies their own owed amount, validate it sums to total
   - PERCENTAGE — each member specifies a %, validate it sums to 100%
-- [ ] Balance calculation service — for a group, compute net balance per user (who owes / is owed, in total)
-- [ ] **Debt simplification algorithm** — given a set of pairwise debts, minimize the number of transactions needed to settle everyone up (classic interview-relevant graph/greedy problem — this is your standout feature)
-- [ ] `GET /api/groups/{id}/balances` — return simplified settle-up suggestions
-- [ ] `POST /api/groups/{id}/settlements` — record a settlement (mark debt as paid)
-- [ ] `GET /api/groups/{id}/activity` — activity feed (expenses + settlements, chronological)
-- [ ] Unit tests for split/balance/debt-simplification logic as you build it (don't wait for Phase 5 — test this core logic immediately since it's the trickiest part)
+- [x] Balance calculation service — for a group, compute net balance per user (who owes / is owed, in total)
+- [x] **Debt simplification algorithm** — given a set of pairwise debts, minimize the number of transactions needed to settle everyone up (classic interview-relevant graph/greedy problem — this is your standout feature)
+- [x] `GET /api/groups/{id}/balances` — return simplified settle-up suggestions
+- [x] `POST /api/groups/{id}/settlements` — record a settlement (mark debt as paid)
+- [x] `GET /api/groups/{id}/activity` — activity feed (expenses + settlements, chronological)
+- [x] Unit tests for split/balance/debt-simplification logic as you build it (don't wait for Phase 5 — test this core logic immediately since it's the trickiest part)
 
 ### Phase 4 — Frontend Build
-- [ ] React app setup (Vite recommended over CRA)
-- [ ] Tailwind CSS setup
-- [ ] Auth pages — login, register
-- [ ] Auth state management (store JWT, attach to requests, handle expiry)
-- [ ] Group dashboard — list groups, create group, invite members
-- [ ] Group detail page — expense list, add-expense form (with split type selector)
-- [ ] Balances view — who owes whom, with the simplified settle-up suggestions
-- [ ] Settle-up flow — mark a debt as paid
-- [ ] Activity feed UI
-- [ ] Responsive design pass (mobile-friendly, since this is genuinely a mobile-use-case app)
-- [ ] Loading states, error states, empty states (small details that read as "polished" to recruiters)
+- [x] React app setup (Vite recommended over CRA)
+- [x] Tailwind CSS setup
+- [x] Auth pages — login, register
+- [x] Auth state management (store JWT, attach to requests, handle expiry)
+- [x] Group dashboard — list groups, create group, invite members
+- [x] Group detail page — expense list, add-expense form (with split type selector)
+- [x] Balances view — who owes whom, with the simplified settle-up suggestions
+- [x] Settle-up flow — mark a debt as paid
+- [x] Activity feed UI
+- [x] Responsive design pass (mobile-friendly, since this is genuinely a mobile-use-case app)
+- [x] Loading states, error states, empty states (small details that read as "polished" to recruiters)
 
 ### Phase 5 — Testing
 - [ ] JUnit + Mockito unit tests for services (especially split/balance/debt-simplification — the highest-value tests)
