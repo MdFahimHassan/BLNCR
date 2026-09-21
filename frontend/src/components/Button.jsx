@@ -32,7 +32,7 @@ export default function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center rounded-[var(--radius-control)] font-medium transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed whitespace-nowrap ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-[var(--radius-control)] font-medium transition-[background-color,color,transform] duration-150 [transition-timing-function:var(--ease-snap)] cursor-pointer active:scale-[0.97] disabled:active:scale-100 disabled:cursor-not-allowed whitespace-nowrap ${variants[variant]} ${sizes[size]} ${className}`}
       {...rest}
     >
       {loading ? (

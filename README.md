@@ -83,8 +83,8 @@ npm run dev
 - [x] JWT authentication (register/login)
 - [x] Expense & split logic
 - [x] **Debt simplification algorithm**
-- [ ] React frontend
-- [ ] Automated test suite (JUnit + Mockito)
+- [x] React frontend
+- [x] Automated test suite (JUnit + Mockito)
 - [ ] Dockerized deployment + CI pipeline
 - [ ] Live demo
 

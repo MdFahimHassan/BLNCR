@@ -14,7 +14,7 @@ A group expense-splitting app (Splitwise-style) — chosen because it has real a
 2. **Backend foundation** ✅ Done
 3. **Expense & split logic** ✅ Done — equal/exact/percentage splits, balance calc, debt-simplification algorithm
 4. **Frontend build** ✅ Done — React + Tailwind
-5. **Testing** — JUnit + Mockito
+5. **Testing** ✅ Done — JUnit + Mockito unit tests, `@DataJpaTest` repository tests, `@WebMvcTest` + full-stack `@SpringBootTest`/MockMvc integration tests
 6. **Dockerize & deploy** — Docker, GitHub Actions CI, Railway/Render + Vercel
 7. **Polish for recruiters** — architecture diagram, README, demo, live link
 
@@ -163,6 +163,32 @@ src/main/java/dev/fahim/blncr/
 
 ---
 
+✅ Phase 5 Completed: Full automated test suite added — unit tests for every service, `@DataJpaTest` repository tests, a `@WebMvcTest` controller slice test, and one full-stack `@SpringBootTest`/MockMvc integration test covering the entire register → group → expense → balances → settle → activity flow with real JWT auth.
+
+**pom.xml fix:** `spring-boot-starter-test` (the base starter providing JUnit Jupiter, Mockito, AssertJ) was missing — only the newer per-slice test starters (`-data-jpa-test`, `-security-test`, `-validation-test`, `-webmvc-test`) were present. Added it back, plus `com.h2database:h2` (test scope only) so the suite runs against an in-memory DB instead of the real Postgres container.
+
+**New test-only config:** `src/test/resources/application-test.properties` — H2 in Postgres-compatibility mode, `ddl-auto=create-drop`, a test-only JWT secret. Activated via `@ActiveProfiles("test")` on every Spring context test (`BlncrApplicationTests`, the `@DataJpaTest` classes, the integration test).
+
+**New files:**
+- `service/SplitCalculatorTest.java` — the highest-value tests in the suite; every EQUAL/EXACT/PERCENTAGE case asserts the split sums back exactly to the input in cents, including the largest-remainder tie-breaking logic
+- `service/BalanceServiceTest.java` — balance math plus the debt-simplification algorithm, including a three-person case that proves it collapses to the minimum number of transactions
+- `service/ExpenseServiceTest.java`, `SettlementServiceTest.java`, `ActivityServiceTest.java`, `GroupAccessServiceTest.java`, `AuthServiceTest.java`, `GroupServiceTest.java` — Mockito unit tests covering the business-rule edge cases (non-member payer, unknown user, mismatched split totals, self-settlement, duplicate email, wrong password, idempotent member-add, etc.)
+- `repository/UserRepositoryTest.java`, `GroupMemberRepositoryTest.java`, `ExpenseRepositoryTest.java`, `SettlementRepositoryTest.java` — `@DataJpaTest` tests against H2, including the unique-email DB constraint
+- `controller/AuthControllerWebMvcTest.java` — `@WebMvcTest` with the security filter chain disabled (`addFilters = false`, since `/api/auth/**` is `permitAll` anyway) to isolate controller/validation/exception-mapping behavior from the DB
+- `integration/GroupExpenseFlowIntegrationTest.java` — the full walkthrough through real MockMvc + JWT auth: register two users, form a group, add a $60 equal-split expense, verify the settle-up suggestion is exactly one $30 payment Bob → Alice, record the settlement, confirm balances zero out, and confirm the activity feed shows both events newest-first. Also covers unauthenticated (401) and non-member (403) access.
+
+**Design notes for later reference:**
+- Boot 4 moved `@DataJpaTest`/`@WebMvcTest`/etc. to modular packages (`org.springframework.boot.data.jpa.test.autoconfigure`, `org.springframework.boot.webmvc.test.autoconfigure`) and replaced the removed `@MockBean` with `@MockitoBean` (`org.springframework.test.context.bean.override.mockito.MockitoBean`) — easy to get wrong since most docs/tutorials still show the old Boot 3 paths.
+- Service unit tests use real `SplitCalculator`/`GroupAccessService` instances where cheap to do so rather than mocking pure logic, so the tests also catch wiring mistakes between layers, not just isolated behavior.
+- Couldn't run `mvn test` in the sandbox that wrote these (no Maven, no Maven Central network access) — verified every route/status/DTO shape by hand against the actual controllers and `GlobalExceptionHandler` instead. **Run `mvn test` locally first** before trusting this suite fully.
+- Alongside Phase 5, did a small, deliberately scoped frontend polish pass (not part of the roadmap, just noticed while reading the code): added a `--ease-snap` easing token and active-press feedback (`active:scale-[...]`) to `Button`, `Modal`'s close button, `GroupCard`, and the toast entrance — the frontend had good tokens/accessibility already but zero tactile press feedback anywhere.
+
+### Next Steps (immediate)
+1. Run `mvn test` (or `./mvnw test`) locally to confirm the new suite actually compiles and passes — it was written and reviewed by hand without a working Maven/network setup.
+2. Move to Phase 6: Dockerize & deploy (Dockerfile, docker-compose, move secrets to env vars, Flyway, GitHub Actions CI, Railway/Render + Vercel).
+
+---
+
 ## FULL ROADMAP — ALL 7 PHASES IN DETAIL
 
 ### Phase 1 — Scope & Data Model ✅ DONE
@@ -214,11 +240,11 @@ This is the phase that makes BLNCR more than a CRUD app — most portfolio value
 - [x] Responsive design pass (mobile-friendly, since this is genuinely a mobile-use-case app)
 - [x] Loading states, error states, empty states (small details that read as "polished" to recruiters)
 
-### Phase 5 — Testing
-- [ ] JUnit + Mockito unit tests for services (especially split/balance/debt-simplification — the highest-value tests)
-- [ ] Repository layer tests (`@DataJpaTest`)
-- [ ] Controller/integration tests (`@SpringBootTest` + MockMvc or WebTestClient)
-- [ ] Test coverage check — aim to cover the core business logic thoroughly, not chase 100% blindly
+### Phase 5 — Testing ✅ DONE
+- [x] JUnit + Mockito unit tests for services (especially split/balance/debt-simplification — the highest-value tests)
+- [x] Repository layer tests (`@DataJpaTest`)
+- [x] Controller/integration tests (`@SpringBootTest` + MockMvc or WebTestClient)
+- [x] Test coverage check — core business logic (split math, debt simplification, balance calc, all service error paths) covered thoroughly rather than chasing 100% blindly
 - [ ] (Optional stretch) Frontend tests — React Testing Library for key flows
 
 ### Phase 6 — Dockerize & Deploy

@@ -6,7 +6,7 @@ export default function GroupCard({ group }) {
   return (
     <Link
       to={`/groups/${group.id}`}
-      className="group flex flex-col justify-between gap-6 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-colors hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-2)]"
+      className="group flex flex-col justify-between gap-6 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-[background-color,border-color,transform] duration-150 [transition-timing-function:var(--ease-snap)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-2)] active:scale-[0.99]"
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0">

@@ -47,6 +47,11 @@
 
   --radius-card: 0.7rem;
   --radius-control: 0.55rem;
+
+  /* Custom easing for entrances and press feedback — a fast-out, gentle-settle curve reads
+     as more considered than the default linear/ease-out utility across modals, toasts and
+     buttons alike. */
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html {

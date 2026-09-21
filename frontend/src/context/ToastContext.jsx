@@ -33,7 +33,7 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             role="status"
-            className={`flex items-start gap-2.5 rounded-[var(--radius-card)] border px-4 py-3 shadow-lg backdrop-blur-sm animate-[toast-in_0.2s_ease-out] ${
+            className={`flex items-start gap-2.5 rounded-[var(--radius-card)] border px-4 py-3 shadow-lg backdrop-blur-sm animate-[toast-in_0.2s_var(--ease-snap)] ${
               t.variant === "success"
                 ? "bg-[var(--color-credit-soft)] border-[var(--color-credit)]/30 text-[var(--color-credit)]"
                 : "bg-[var(--color-debit-soft)] border-[var(--color-debit)]/30 text-[var(--color-debit)]"
