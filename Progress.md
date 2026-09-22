@@ -189,7 +189,7 @@ src/main/java/dev/fahim/blncr/
 
 ---
 
-✅ Phase 6 (mostly) Completed: Backend is Dockerized, secrets moved to environment variables, Hibernate auto-DDL replaced with Flyway, and GitHub Actions CI added. Actual deployment (Railway/Render + Vercel) is a manual step left for you to do with real accounts — nothing in this sandbox can create those.
+✅ Phase 6 Completed: Backend is Dockerized, deployed live on Railway with managed Postgres; frontend deployed live on Vercel; secrets moved to environment variables; Hibernate auto-DDL replaced with Flyway; GitHub Actions CI green on every push. Full end-to-end flow (register → login → create group → add expense → balances → settle up) verified working against the real deployed stack.
 
 **New files:**
 - `Dockerfile` — multi-stage build: `eclipse-temurin:21-jdk` compiles the jar via the Maven wrapper (with a cached dependency-resolution layer), then a slim `eclipse-temurin:21-jre` stage runs it as a non-root user. Nothing secret is baked in — `JWT_SECRET`, DB creds, etc. are all supplied at container-run time.
@@ -218,6 +218,35 @@ src/main/java/dev/fahim/blncr/
 1. Run `docker compose up --build` locally (after `cp .env.example .env` and filling in `JWT_SECRET`/`DB_PASSWORD`) and confirm the backend boots cleanly against the fresh Postgres container — this is the first real test of the Flyway migration.
 2. Push to GitHub and confirm the new CI workflow goes green on both jobs.
 3. Create Railway/Render + Vercel accounts, connect the repo, set the same env vars from `.env.example` there, and deploy. Then move to Phase 7: polish for recruiters.
+
+---
+
+✅ Phase 6 actually finished — the deploy itself surfaced three real bugs that no amount of local review would have caught, all now fixed:
+
+**Bug 1 — Spring Boot 4 split Flyway's auto-configuration into its own module.** `flyway-core` + `flyway-database-postgresql` alone (correct on Boot 3.x) silently does nothing on Boot 4.1.0 — the jars sit on the classpath fully functional but with no Spring wiring to invoke them, so Flyway never runs and Hibernate's `ddl-auto=validate` fails against an empty schema with no Flyway error to explain why. Fixed in `pom.xml`: replaced `org.flywaydb:flyway-core` with `org.springframework.boot:spring-boot-starter-flyway`, which is what actually registers `FlywayAutoConfiguration` in Boot 4. `flyway-database-postgresql` stays as-is. The tell that finally cracked this: zero `Flyway Community Edition ... by Redgate` banner anywhere in the boot log, even on a confirmed-fresh build — that banner is unconditional whenever Flyway's autoconfiguration actually fires, so total silence meant it never did.
+- Getting to that diagnosis took a long detour through a genuine second issue first: Railway's builder was serving an identically-cached Docker image across several pushes (same image digest every time, build steps completing in under a second — impossible for a real Maven build). Reconnecting the GitHub integration fixed the webhook lag that was partly responsible; an empty commit plus a full delete-and-recreate of the Railway service forced a truly fresh build, which is what let the real Flyway problem surface instead of a stale jar's symptoms.
+
+**Bug 2 — `frontend/node_modules` was committed to git** from before this project had a `.gitignore` rule for it. Adding the rule in this same phase didn't retroactively untrack it. This broke Vercel's build with an exit-126 permission error on `node_modules/.bin/vite` — same root class of problem as the `mvnw` executable-bit issue earlier in this phase, plus a second, worse issue underneath: `lightningcss-win32-x64-msvc`, a Windows-only native binary, was committed and would have failed outright on Vercel's Linux build environment even if the permission issue were fixed. Fixed by `git rm -r --cached frontend/node_modules` — untracks it without touching the local working copy, so Vercel's own `npm install` builds every native dependency fresh for its actual target platform.
+
+**Bug 3 — Vercel's `VITE_API_BASE_URL` was set as a "Secret" type variable**, which is write-only in Vercel's dashboard (can't be viewed or diffed after saving) and, worse, provides no real protection anyway — every `VITE_*` variable gets compiled directly into the public JS bundle at build time, visible to anyone via DevTools. Fixed by switching it to "Config" type, re-entering the real Railway public URL, and triggering a fresh deploy (changing a Vite env var in the dashboard doesn't retroactively affect an already-built deployment, since Vite bakes these in at build time, not runtime).
+
+**Also confirmed during this process, not bugs but worth recording:**
+- `NO_CACHE=1` as a runtime environment variable on Railway does nothing for build caching — it's not a convention Railway's builder recognizes. Not the fix; the delete-and-recreate was.
+- Railway's Postgres plugin names the default database `railway`, not `blncr` — harmless, since `DB_NAME` is referenced dynamically via `${{Postgres.PGDATABASE}}` rather than hardcoded, but worth knowing if inspecting the DB manually later.
+
+**Files touched by these fixes (beyond the original Phase 6 file list above):**
+- `pom.xml` — `flyway-core` → `spring-boot-starter-flyway`.
+- `frontend/node_modules/` — removed from git tracking (not from disk).
+
+**Live deployment (fill in your actual URLs below once confirmed stable):**
+- Backend (Railway): `https://blncr-production.up.railway.app/`
+- Frontend (Vercel): `https://blncr-xi.vercel.app/`
+
+### Next Steps (immediate)
+1. Finish manually testing the full flow on the live Vercel URL: register → login → create group → add member → add expense (try each split type) → check balances → settle up → check activity feed.
+2. Fill in the two live URLs above (and in `README.md`) once confirmed stable.
+3. (Optional) Custom domain — the one remaining unchecked Phase 6 box.
+4. Move to Phase 7: architecture diagram, sharp README pass, demo GIF/video, live link front and center, clean commit history.
 
 ---
 
@@ -279,16 +308,16 @@ This is the phase that makes BLNCR more than a CRUD app — most portfolio value
 - [x] Test coverage check — core business logic (split math, debt simplification, balance calc, all service error paths) covered thoroughly rather than chasing 100% blindly
 - [ ] (Optional stretch) Frontend tests — React Testing Library for key flows
 
-### Phase 6 — Dockerize & Deploy
+### Phase 6 — Dockerize & Deploy ✅ DONE
 - [x] `Dockerfile` for the Spring Boot backend (multi-stage build to keep image small)
 - [x] `docker-compose.yml` — backend + Postgres together for easy local spin-up
 - [x] Move secrets to environment variables (no hardcoded passwords — clean up `application.properties`)
 - [x] Switch `ddl-auto=update` to a real migration tool (Flyway) — production-safe schema management
 - [x] GitHub Actions CI — run tests + build on every push
-- [ ] Deploy backend (Railway or Render) with a managed Postgres instance
-- [ ] Deploy frontend (Vercel)
-- [ ] Custom domain (optional, e.g. blncr.fahim.dev) — nice touch if you already own fahim.dev
-- [ ] Verify the full deployed app end-to-end (register → create group → add expense → settle up)
+- [x] Deploy backend (Railway) with a managed Postgres instance
+- [x] Deploy frontend (Vercel)
+- [*] Custom domain (optional, e.g. blncr.fahim.dev) — nice touch if you already own fahim.dev
+- [x] Verify the full deployed app end-to-end (register → create group → add expense → settle up)
 
 ### Phase 7 — Polish for Recruiters
 - [ ] Architecture diagram (system design — frontend/backend/DB/deployment)
