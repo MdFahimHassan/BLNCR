@@ -66,11 +66,14 @@
 		</dependency>
 
 		<!-- Flyway: production-safe schema migrations, replacing ddl-auto=update (Phase 6).
+		     Spring Boot 4 split FlywayAutoConfiguration out of the autoconfigure monolith into
+		     its own module — declaring flyway-core alone no longer wires it up (it just sits
+		     on the classpath unused). This starter is what actually pulls in the auto-config.
 		     flyway-database-postgresql is a separate artifact as of Flyway 10+ (split out of
 		     flyway-core) and is required for Postgres support, or migrations fail at boot. -->
 		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-flyway</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
