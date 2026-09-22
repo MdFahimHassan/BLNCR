@@ -20,6 +20,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Make mvnw executable
+        # git doesn't always preserve the executable bit on mvnw depending on how the
+        # repo was created/transferred — set it explicitly instead of trusting file mode.
+        run: chmod +x mvnw
+
       - name: Run tests
         # Tests run against the "test" Spring profile (H2, see
         # src/test/resources/application-test.properties) — no Postgres
