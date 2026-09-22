@@ -1,0 +1,19 @@
+target/
+.mvn/wrapper/maven-wrapper.jar
+.git/
+.idea/
+.vscode/
+*.iml
+
+# Frontend isn't part of the backend image
+frontend/
+
+# Local env / secrets — never sent to the Docker build context
+.env
+.env.*
+!.env.example
+
+*.log
+HELP.md
+Progress.md
+README.md

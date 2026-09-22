@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Docker / secrets (Phase 6) ###
+# Real env files with secrets are never committed — only the .env.example templates are.
+.env
+.env.*
+!.env.example
+!frontend/.env
+!frontend/.env.example
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/

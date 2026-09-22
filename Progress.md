@@ -15,7 +15,7 @@ A group expense-splitting app (Splitwise-style) — chosen because it has real a
 3. **Expense & split logic** ✅ Done — equal/exact/percentage splits, balance calc, debt-simplification algorithm
 4. **Frontend build** ✅ Done — React + Tailwind
 5. **Testing** ✅ Done — JUnit + Mockito unit tests, `@DataJpaTest` repository tests, `@WebMvcTest` + full-stack `@SpringBootTest`/MockMvc integration tests
-6. **Dockerize & deploy** — Docker, GitHub Actions CI, Railway/Render + Vercel
+6. **Dockerize & deploy** ✅ Docker + Flyway + CI done — deploy step (Railway/Render + Vercel) still pending
 7. **Polish for recruiters** — architecture diagram, README, demo, live link
 
 ### v1 Feature Scope (locked in)
@@ -189,6 +189,38 @@ src/main/java/dev/fahim/blncr/
 
 ---
 
+✅ Phase 6 (mostly) Completed: Backend is Dockerized, secrets moved to environment variables, Hibernate auto-DDL replaced with Flyway, and GitHub Actions CI added. Actual deployment (Railway/Render + Vercel) is a manual step left for you to do with real accounts — nothing in this sandbox can create those.
+
+**New files:**
+- `Dockerfile` — multi-stage build: `eclipse-temurin:21-jdk` compiles the jar via the Maven wrapper (with a cached dependency-resolution layer), then a slim `eclipse-temurin:21-jre` stage runs it as a non-root user. Nothing secret is baked in — `JWT_SECRET`, DB creds, etc. are all supplied at container-run time.
+- `.dockerignore` — keeps `target/`, `.git/`, `frontend/`, and any local `.env` files out of the build context.
+- `docker-compose.yml` — `db` (Postgres 18, healthcheck-gated) + `backend` (built from the Dockerfile), wired together with env vars that default sensibly for local use but read from a `.env` file (via `.env.example`) for anything secret.
+- `.env.example` (root) — template for `DB_NAME`/`DB_USERNAME`/`DB_PASSWORD`/`JWT_SECRET`/`JWT_EXPIRATION_MS`/`CORS_ALLOWED_ORIGINS`. `JWT_SECRET` has no default anywhere anymore — the app now fails fast on boot if it's not set, instead of silently running with the old checked-in secret.
+- `frontend/.env.example` — mirrors the existing `frontend/.env`, documents pointing `VITE_API_BASE_URL` at a deployed backend.
+- `src/main/resources/db/migration/V1__init_schema.sql` — Flyway baseline migration. Hand-written to reproduce **exactly** what Hibernate's `ddl-auto=update` had already created from the entities (same tables/columns/nullability/FKs), plus a few additions Hibernate's auto-ddl never added: a unique index on `(group_id, user_id)` in `group_members`, and lookup indexes on every foreign key repositories actually query by (`findByGroupId`, `findByUserId`, etc.).
+- `.github/workflows/ci.yml` — two jobs on every push/PR to `main`: **backend** (`mvn test` against the H2 `test` profile, then `mvn package` and a Docker image build to catch Dockerfile breakage) and **frontend** (`npm ci && npm run build`).
+
+**Modified files:**
+- `pom.xml` — added `flyway-core` and `flyway-database-postgresql` (the latter is a separate artifact as of Flyway 10+; migrations fail at boot without it even with `flyway-core` present).
+- `src/main/resources/application.properties` — every value is now `${ENV_VAR:default}`; local dev still works with zero setup (defaults match `docker-compose.yml`), but nothing sensitive is hardcoded. `spring.jpa.hibernate.ddl-auto` changed from `update` to `validate` (Hibernate now only checks the schema matches the entities — Flyway is the only thing allowed to change it). Added `spring.flyway.*` and a new `cors.allowed-origins` property.
+- `src/main/java/dev/fahim/blncr/config/SecurityConfig.java` — CORS `allowedOrigins` now comes from the `cors.allowed-origins` property (`@Value`) instead of a hardcoded `List.of("http://localhost:5173", ...)`, so the deployed Vercel origin can be added via `CORS_ALLOWED_ORIGINS` without a code change.
+- `src/test/resources/application-test.properties` — added `spring.flyway.enabled=false` (tests still use Hibernate `create-drop` directly against H2, untouched by the migration) and an explicit `cors.allowed-origins` so tests never depend on that env var being set.
+- `.gitignore` — added rules so real `.env` files are never committed, while `.env.example` (and the pre-existing, non-secret `frontend/.env`) stay tracked.
+- `README.md` — added a "Running with Docker" section, checked off the Dockerize/CI roadmap line, added the Flyway design-decision note.
+
+**Design notes for later reference:**
+- The Flyway migration was hand-written, not generated from a live `schema.sql` dump (no running Postgres in this sandbox) — it was checked column-by-column against every `@Entity` class instead. **Run `docker compose up --build` locally and confirm the app boots with `ddl-auto=validate`** before trusting it fully; if Hibernate throws a schema-validation error on boot, the migration has a mismatch to fix.
+- Didn't touch `ddl-auto` behavior for the test profile — it still uses Hibernate `create-drop` against H2 directly, deliberately decoupled from the Flyway migration, so a bug in `V1__init_schema.sql` wouldn't be masked by tests silently also not using it.
+- CI's Docker-build step doesn't push anywhere (no registry configured) — it only proves the image *builds*, which is enough to catch a broken Dockerfile in review before it reaches a real deploy step.
+- Actual deployment (Railway/Render for the backend + managed Postgres, Vercel for the frontend) needs real accounts/API tokens this sandbox doesn't have — that part of Phase 6, plus a custom domain, is left as a manual next step.
+
+### Next Steps (immediate)
+1. Run `docker compose up --build` locally (after `cp .env.example .env` and filling in `JWT_SECRET`/`DB_PASSWORD`) and confirm the backend boots cleanly against the fresh Postgres container — this is the first real test of the Flyway migration.
+2. Push to GitHub and confirm the new CI workflow goes green on both jobs.
+3. Create Railway/Render + Vercel accounts, connect the repo, set the same env vars from `.env.example` there, and deploy. Then move to Phase 7: polish for recruiters.
+
+---
+
 ## FULL ROADMAP — ALL 7 PHASES IN DETAIL
 
 ### Phase 1 — Scope & Data Model ✅ DONE
@@ -248,11 +280,11 @@ This is the phase that makes BLNCR more than a CRUD app — most portfolio value
 - [ ] (Optional stretch) Frontend tests — React Testing Library for key flows
 
 ### Phase 6 — Dockerize & Deploy
-- [ ] `Dockerfile` for the Spring Boot backend (multi-stage build to keep image small)
-- [ ] `docker-compose.yml` — backend + Postgres together for easy local spin-up
-- [ ] Move secrets to environment variables (no hardcoded passwords — clean up `application.properties`)
-- [ ] Switch `ddl-auto=update` to a real migration tool (Flyway) — production-safe schema management
-- [ ] GitHub Actions CI — run tests + build on every push
+- [x] `Dockerfile` for the Spring Boot backend (multi-stage build to keep image small)
+- [x] `docker-compose.yml` — backend + Postgres together for easy local spin-up
+- [x] Move secrets to environment variables (no hardcoded passwords — clean up `application.properties`)
+- [x] Switch `ddl-auto=update` to a real migration tool (Flyway) — production-safe schema management
+- [x] GitHub Actions CI — run tests + build on every push
 - [ ] Deploy backend (Railway or Render) with a managed Postgres instance
 - [ ] Deploy frontend (Vercel)
 - [ ] Custom domain (optional, e.g. blncr.fahim.dev) — nice touch if you already own fahim.dev

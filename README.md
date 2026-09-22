@@ -76,6 +76,17 @@ npm install
 npm run dev
 ```
 
+### Running with Docker
+
+Spins up the backend and a Postgres container together — no local Java/Maven/Postgres install needed.
+
+```bash
+cp .env.example .env   # then fill in JWT_SECRET (openssl rand -base64 64) and a real DB_PASSWORD
+docker compose up --build
+```
+
+The API is then available at `http://localhost:9090`. Run the frontend separately with `npm run dev` (above) pointed at it via `frontend/.env`.
+
 ## Roadmap
 
 - [x] Data model & entity design
@@ -85,14 +96,15 @@ npm run dev
 - [x] **Debt simplification algorithm**
 - [x] React frontend
 - [x] Automated test suite (JUnit + Mockito)
-- [ ] Dockerized deployment + CI pipeline
-- [ ] Live demo
+- [x] Dockerized backend + Postgres (docker-compose), Flyway migrations, GitHub Actions CI
+- [ ] Live demo (Railway/Render + Vercel)
 
 ## Design Decisions
 
 - **`BigDecimal` over `float`/`double`** for all monetary fields — floating-point types introduce rounding errors that are unacceptable in financial calculations.
 - **JWT over session-based auth** — stateless auth scales more naturally for a REST API consumed by a decoupled frontend.
 - **Layered architecture** — separating controllers, services, and repositories keeps the debt-simplification logic isolated and unit-testable without spinning up the full Spring context.
+- **Flyway over `ddl-auto=update`** — versioned, reviewable SQL migrations instead of letting Hibernate auto-alter the production schema.
 
 ## License
 

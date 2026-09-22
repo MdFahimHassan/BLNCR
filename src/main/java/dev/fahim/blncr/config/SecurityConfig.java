@@ -3,6 +3,7 @@ package dev.fahim.blncr.config;
 import dev.fahim.blncr.security.CustomUserDetailsService;
 import dev.fahim.blncr.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,12 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
+
+    // Comma-separated allowed origins, driven by the cors.allowed-origins property
+    // (CORS_ALLOWED_ORIGINS env var in real deployments) instead of being hardcoded,
+    // so the deployed Vercel frontend URL can be set without touching code (Phase 6).
+    @Value("${cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -67,13 +74,14 @@ public class SecurityConfig {
     }
 
     /**
-     * Permissive local-dev CORS setup so the future React frontend (Vite on localhost:5173,
-     * or a deployed Vercel origin) can call this API. Tighten allowedOrigins before deploying.
+     * CORS setup for the React frontend (Vite dev server locally, deployed Vercel origin in
+     * production). Allowed origins now come from the cors.allowed-origins property so this
+     * can be tightened per-environment via CORS_ALLOWED_ORIGINS without a code change (Phase 6).
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

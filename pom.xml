@@ -65,6 +65,18 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Flyway: production-safe schema migrations, replacing ddl-auto=update (Phase 6).
+		     flyway-database-postgresql is a separate artifact as of Flyway 10+ (split out of
+		     flyway-core) and is required for Postgres support, or migrations fail at boot. -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+
 		<!-- JWT support -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
