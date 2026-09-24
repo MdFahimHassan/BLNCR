@@ -196,19 +196,18 @@ export default function LandingPage() {
         <div className="relative z-10 mx-auto max-w-3xl px-4 pt-16 text-center sm:px-6 sm:pt-24">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs text-[var(--color-text-faint)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
-            Debt simplification, solved
+            Minimum cash flow algorithm inside
           </div>
           <h1 className="text-4xl font-semibold tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
             Split fairly. Settle in the <span className="text-[var(--color-accent)]">fewest payments</span>.
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-[15px] leading-relaxed text-[var(--color-text-soft)]">
-            Most splitters stop at "who owes what." BLNCR treats a group's debts as a graph and
-            simplifies them down to the minimum number of payments needed to zero everyone out.
+            Not just who owes what, BLNCR runs a debt-simplification algorithm to find the fewest payments that settle the group.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link to="/register">
               <Button size="lg">
-                Get started free
+                Get started for free
                 <ArrowRight size={16} weight="bold" />
               </Button>
             </Link>
