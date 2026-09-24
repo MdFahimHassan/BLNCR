@@ -91,7 +91,7 @@ export default function GroupPage() {
     <div className="flex flex-col gap-6">
       <div>
         <Link
-          to="/"
+          to="/dashboard"
           className="mb-3 inline-flex items-center gap-1.5 text-xs text-[var(--color-text-faint)] hover:text-[var(--color-text)] transition-colors"
         >
           <ArrowLeft size={13} />

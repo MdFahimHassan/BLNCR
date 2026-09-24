@@ -18,7 +18,7 @@ export default function AppShell({ children }) {
     <div className="min-h-[100dvh] flex flex-col bg-[var(--color-base)]">
       <header className="sticky top-0 z-30 border-b border-[var(--color-border-soft)] bg-[var(--color-base)]/90 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/dashboard" className="flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-[5px] bg-[var(--color-accent)] text-[11px] font-bold text-[var(--color-accent-ink)]">
               B
             </span>

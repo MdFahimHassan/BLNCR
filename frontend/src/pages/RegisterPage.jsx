@@ -17,7 +17,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form.name, form.email, form.password);
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       toast.error(err.message);
     } finally {

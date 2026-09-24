@@ -10,7 +10,7 @@ export default function GroupCard({ group }) {
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0">
-          <h3 className="truncate text-base font-semibold text-[var(--color-text)]">{group.name}</h3>
+          <h3 className="truncate text-[1rem] font-semibold text-[var(--color-text)]">{group.name}</h3>
           <p className="mt-1 text-xs text-[var(--color-text-faint)]">
             Created {formatDate(group.createdAt)} by {group.createdByName}
           </p>
