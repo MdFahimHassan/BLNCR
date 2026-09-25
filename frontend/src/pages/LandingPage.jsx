@@ -12,10 +12,11 @@ import {
   Terminal,
 } from "@phosphor-icons/react";
 import Button from "../components/Button";
+import Avatar from "../components/Avatar";
 import LedgerPreview from "../components/LedgerPreview";
 import HeroCardArc from "../components/HeroCardArc";
-import DebtGraphCollapse from "../components/DebtGraphCollapse";
-import heroCard from "../assets/hero-card.webp";
+import GlobeLedger from "../components/GlobeLedger";
+import { formatSignedMoney } from "../lib/format";
 
 const REPO_URL = "https://github.com/MdFahimHassan/BLNCR";
 
@@ -48,27 +49,44 @@ const NUMBERED_FEATURES = [
   },
 ];
 
-function StackedCards() {
+const SETTLE_ROWS = [
+  { from: "Charlie", to: "Alice", value: -18.0 },
+  { from: "Bob", to: "Alice", value: -7.0 },
+];
+
+function SettleUpPanel() {
   return (
-    <div className="relative h-[230px] w-full sm:h-[270px]">
-      <img
-        src={heroCard}
-        alt=""
-        draggable={false}
-        className="absolute left-1/2 top-1/2 w-[200px] -translate-x-[calc(50%+64px)] -translate-y-[calc(50%+30px)] rotate-[-11deg] opacity-45 select-none sm:w-[230px]"
-      />
-      <img
-        src={heroCard}
-        alt=""
-        draggable={false}
-        className="absolute left-1/2 top-1/2 w-[200px] -translate-x-[calc(50%+28px)] -translate-y-[calc(50%+12px)] rotate-[6deg] opacity-70 select-none sm:w-[230px]"
-      />
-      <img
-        src={heroCard}
-        alt="BLNCR balance card"
-        draggable={false}
-        className="absolute left-1/2 top-1/2 w-[200px] -translate-x-1/2 -translate-y-1/2 rotate-[-2deg] select-none drop-shadow-[0_25px_45px_rgba(0,0,0,0.5)] sm:w-[230px]"
-      />
+    <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-xs font-medium text-[var(--color-text-faint)]">Settle-up plan</span>
+        <span className="ledger-figure rounded-full bg-[var(--color-credit-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-credit)]">
+          optimal
+        </span>
+      </div>
+      <div className="flex flex-col gap-2.5">
+        {SETTLE_ROWS.map((r, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-[var(--color-border-soft)] bg-[var(--color-surface-2)] px-3 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <Avatar name={r.from} size="sm" />
+              <ArrowRight size={12} className="text-[var(--color-text-faint)]" />
+              <Avatar name={r.to} size="sm" />
+              <span className="text-xs text-[var(--color-text-soft)] sm:text-sm">
+                {r.from} → {r.to}
+              </span>
+            </div>
+            <span className="ledger-figure text-xs font-medium text-[var(--color-text)] sm:text-sm">
+              {formatSignedMoney(r.value).replace("-", "")}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-xs text-[var(--color-text-faint)]">
+        <span>5 raw debts, simplified</span>
+        <span className="ledger-figure font-medium text-[var(--color-accent)]">2 payments</span>
+      </div>
     </div>
   );
 }
@@ -188,7 +206,7 @@ export default function LandingPage() {
               Balances that <span className="text-[var(--color-accent)]">update</span> themselves
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
-              Every member's net position recalculates the moment an expense lands needing
+              Every member's net position recalculates the moment an expense lands -
               no spreadsheet, no waiting on someone to "do the math."
             </p>
           </div>
@@ -201,16 +219,16 @@ export default function LandingPage() {
           <div className="lg:order-1">
             <span className="text-xs font-medium text-[var(--color-accent)]">02 · Settle-up plan</span>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
-              The <span className="text-[var(--color-accent)]">fewest</span> possible payments
+              The fewest possible payments
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
               True minimum-transaction debt netting is NP-hard in general. BLNCR's greedy
-              largest-creditor/largest-debtor heuristic doesn't chase the theoretical optimum, rather
-              it gets real groups' tangled expenses down to a short, clean plan anyway.
+              largest-creditor/largest-debtor heuristic collapses a real group's tangled expenses
+              into a short, clean plan in practice.
             </p>
           </div>
           <div className="lg:order-2">
-            <DebtGraphCollapse />
+            <SettleUpPanel />
           </div>
         </div>
       </section>
@@ -221,8 +239,11 @@ export default function LandingPage() {
           <h2 className="text-center text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
             Everything a group needs
           </h2>
+          <p className="mx-auto mt-3 max-w-md text-center text-sm text-[var(--color-text-soft)]">
+            Works the same whether your group's splitting a dinner bill or spread across five time zones.
+          </p>
           <div className="mt-10 grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
-            <StackedCards />
+            <GlobeLedger />
             <div className="flex flex-col gap-5">
               {NUMBERED_FEATURES.map((f) => (
                 <div
