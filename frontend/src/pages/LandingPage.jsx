@@ -122,16 +122,14 @@ function PlanCard({ icon: Icon, eyebrow, title, bullets, cta, highlight, href, t
 
   return (
     <div
-      className={`flex flex-col rounded-[var(--radius-card)] border p-6 sm:p-7 ${
-        highlight
+      className={`flex flex-col rounded-[var(--radius-card)] border p-6 sm:p-7 ${highlight
           ? "border-[var(--color-accent)]/40 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-20px_rgba(215,255,62,0.35)]"
           : "border-[var(--color-border)] bg-[var(--color-surface)]"
-      }`}
+        }`}
     >
       <div
-        className={`flex h-9 w-9 items-center justify-center rounded-full ${
-          highlight ? "bg-[var(--color-accent)] text-[var(--color-accent-ink)]" : "bg-[var(--color-surface-3)] text-[var(--color-text-soft)]"
-        }`}
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${highlight ? "bg-[var(--color-accent)] text-[var(--color-accent-ink)]" : "bg-[var(--color-surface-3)] text-[var(--color-text-soft)]"
+          }`}
       >
         <Icon size={17} weight="bold" />
       </div>
@@ -223,23 +221,6 @@ export default function LandingPage() {
         <div className="h-6 sm:h-10" />
       </section>
 
-      {/* Trust / tech strip */}
-      <section className="border-t border-[var(--color-border-soft)]">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-10 sm:px-6">
-          <span className="text-xs font-medium text-[var(--color-text-faint)]">Built with</span>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {TECH.map((t) => (
-              <span
-                key={t}
-                className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs text-[var(--color-text-soft)]"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Panel #1 — balances (panel left, text right) */}
       <section className="border-t border-[var(--color-border-soft)] bg-[var(--color-base-raised)]">
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
@@ -247,11 +228,11 @@ export default function LandingPage() {
           <div>
             <span className="text-xs font-medium text-[var(--color-accent)]">01 · Real-time balances</span>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
-              See exactly who owes what
+              Balances that <span className="text-[var(--color-accent)]">update</span> themselves
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
-              Every member's net position recalculates the moment an expense lands — no manual
-              tallying, no spreadsheet, no waiting for someone to "do the math."
+              Every member's net position recalculates the moment an expense lands -
+              no spreadsheet, no waiting on someone to "do the math."
             </p>
           </div>
         </div>
