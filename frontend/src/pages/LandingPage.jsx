@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   ClockCounterClockwise,
   CheckCircle,
-  Rocket,
+  Lightning,
   Terminal,
 } from "@phosphor-icons/react";
 import Button from "../components/Button";
@@ -16,6 +16,7 @@ import Avatar from "../components/Avatar";
 import LedgerPreview from "../components/LedgerPreview";
 import HeroCardArc from "../components/HeroCardArc";
 import GlobeLedger from "../components/GlobeLedger";
+import DebtGraphCollapse from "../components/DebtGraphCollapse";
 import { formatSignedMoney } from "../lib/format";
 
 const REPO_URL = "https://github.com/MdFahimHassan/BLNCR";
@@ -91,31 +92,36 @@ function SettleUpPanel() {
   );
 }
 
-function PlanCard({ icon: Icon, eyebrow, title, bullets, cta, highlight, href, to }) {
+function PlanCard({ icon: Icon, eyebrow, title, bullets, cta, highlight, badge, href, to }) {
   const Wrapper = to ? Link : "a";
   const wrapperProps = to ? { to } : { href, target: "_blank", rel: "noreferrer" };
 
   return (
     <div
-      className={`flex flex-col rounded-[var(--radius-card)] border p-6 sm:p-7 ${highlight
-          ? "border-[var(--color-accent)]/40 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-20px_rgba(215,255,62,0.35)]"
-          : "border-[var(--color-border)] bg-[var(--color-surface)]"
+      className={`relative flex flex-col rounded-[var(--radius-card)] border p-6 sm:p-7 ${highlight
+        ? "border-[var(--color-accent)]/40 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-20px_rgba(215,255,62,0.35)]"
+        : "border-[var(--color-border)] bg-[var(--color-surface)]"
         }`}
     >
+      {badge && (
+        <span className="absolute right-6 top-6 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--color-accent-ink)] sm:right-7 sm:top-7">
+          {badge}
+        </span>
+      )}
       <div
         className={`flex h-9 w-9 items-center justify-center rounded-full ${highlight ? "bg-[var(--color-accent)] text-[var(--color-accent-ink)]" : "bg-[var(--color-surface-3)] text-[var(--color-text-soft)]"
           }`}
       >
-        <Icon size={17} weight="bold" />
+        <Icon size={19} weight={highlight ? "fill" : "bold"} />
       </div>
       <span className="mt-4 text-xs font-medium text-[var(--color-text-faint)]">{eyebrow}</span>
       <h3 className="mt-1 text-lg font-semibold tracking-tight text-[var(--color-text)]">{title}</h3>
 
       <ul className="mt-5 flex flex-col gap-2.5">
-        {bullets.map((b) => (
-          <li key={b} className="flex items-start gap-2 text-sm text-[var(--color-text-soft)]">
+        {bullets.map((b, i) => (
+          <li key={i} className="flex items-start gap-2 text-sm text-[var(--color-text-soft)]">
             <CheckCircle size={16} className="mt-0.5 shrink-0 text-[var(--color-credit)]" />
-            {b}
+            <span>{b}</span>
           </li>
         ))}
       </ul>
@@ -219,16 +225,16 @@ export default function LandingPage() {
           <div className="lg:order-1">
             <span className="text-xs font-medium text-[var(--color-accent)]">02 · Settle-up plan</span>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
-              The fewest possible payments
+              The <span className="text-[var(--color-accent)]">fewest</span> possible payments
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
               True minimum-transaction debt netting is NP-hard in general. BLNCR's greedy
-              largest-creditor/largest-debtor heuristic collapses a real group's tangled expenses
-              into a short, clean plan in practice.
+              largest-creditor/largest-debtor heuristic doesn't chase the theoretical optimum —
+              it gets real groups' tangled expenses down to a short, clean plan anyway.
             </p>
           </div>
           <div className="lg:order-2">
-            <SettleUpPanel />
+            <DebtGraphCollapse />
           </div>
         </div>
       </section>
@@ -282,25 +288,36 @@ export default function LandingPage() {
               eyebrow="Local"
               title="Run it locally"
               bullets={[
-                "docker compose up --build — backend + Postgres",
-                "Flyway-versioned schema migrations",
-                "Full JUnit + Mockito test suite",
+                <>
+                  <code className="feature-code">docker compose up --build</code> — backend + Postgres
+                </>,
+                <>
+                  <code className="feature-code">Flyway</code>-versioned schema migrations
+                </>,
+                <>
+                  Full <code className="feature-code">JUnit</code> + <code className="feature-code">Mockito</code> test suite
+                </>,
               ]}
               cta={
                 <>
                   View setup guide <ArrowUpRight size={15} />
                 </>
               }
-              href={REPO_URL}
+              href={`${REPO_URL}/blob/main/README.md#getting-started`}
             />
             <PlanCard
-              icon={Rocket}
+              icon={Lightning}
               eyebrow="Live"
               title="Try the live demo"
               highlight
+              badge="No install"
               bullets={[
-                "Deployed on Railway (API) + Vercel (frontend)",
-                "Real managed Postgres, real JWT auth",
+                <>
+                  Deployed on <code className="feature-code">Railway</code> (API) + <code className="feature-code">Vercel</code> (frontend)
+                </>,
+                <>
+                  Real managed Postgres, real <code className="feature-code">JWT</code> auth
+                </>,
                 "No setup — register and add an expense",
               ]}
               cta={
@@ -326,11 +343,6 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <a href={REPO_URL} target="_blank" rel="noreferrer">
-              <Button size="lg" variant="secondary">
-                View source
-              </Button>
-            </a>
             <Link to="/register">
               <Button size="lg">
                 Get started free
