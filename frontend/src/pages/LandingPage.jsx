@@ -18,6 +18,7 @@ import HeroCardArc from "../components/HeroCardArc";
 import GlobeLedger from "../components/GlobeLedger";
 import DebtGraphCollapse from "../components/DebtGraphCollapse";
 import { formatSignedMoney } from "../lib/format";
+import logo from "../assets/logo.svg";
 
 const REPO_URL = "https://github.com/MdFahimHassan/BLNCR";
 
@@ -142,9 +143,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-30 border-b border-[var(--color-border-soft)] bg-[var(--color-base)]/90 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-[5px] bg-[var(--color-accent)] text-[11px] font-bold text-[var(--color-accent-ink)]">
-              B
-            </span>
+            <img src={logo} alt="BLNCR" className="h-6 w-6" />
             <span className="text-sm font-semibold tracking-tight">BLNCR</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -358,23 +357,14 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-[4px] bg-[var(--color-accent)] text-[10px] font-bold text-[var(--color-accent-ink)]">
-                B
-              </span>
+              <img src={logo} alt="BLNCR" className="h-5 w-5" />
               <span className="text-sm font-semibold tracking-tight text-[var(--color-text)]">BLNCR</span>
             </div>
             <nav className="flex items-center gap-5 text-sm text-[var(--color-text-soft)]">
               <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-[var(--color-text)] transition-colors">
                 Source
               </a>
-              <a
-                href="https://personal-portfolio-rho-lac-91.vercel.app/"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-[var(--color-text)] transition-colors"
-              >
-                Built by Md. Fahim Hassan
-              </a>
+              <span>Built by Md. Fahim Hassan</span>
             </nav>
             <a
               href={REPO_URL}

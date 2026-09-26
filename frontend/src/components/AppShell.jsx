@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { SignOut, CaretDown } from "@phosphor-icons/react";
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./Avatar";
+import logo from "../assets/logo.svg";
 
 export default function AppShell({ children }) {
   const { user, logout } = useAuth();
@@ -19,9 +20,7 @@ export default function AppShell({ children }) {
       <header className="sticky top-0 z-30 border-b border-[var(--color-border-soft)] bg-[var(--color-base)]/90 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-[5px] bg-[var(--color-accent)] text-[11px] font-bold text-[var(--color-accent-ink)]">
-              B
-            </span>
+            <img src={logo} alt="BLNCR" className="h-6 w-6" />
             <span className="text-sm font-semibold tracking-tight">BLNCR</span>
           </Link>
 
