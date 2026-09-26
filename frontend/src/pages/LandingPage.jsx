@@ -12,6 +12,8 @@ import {
   Terminal,
 } from "@phosphor-icons/react";
 import Button from "../components/Button";
+import Reveal from "../components/Reveal";
+import BackgroundFX from "../components/BackgroundFX";
 import Avatar from "../components/Avatar";
 import LedgerPreview from "../components/LedgerPreview";
 import HeroCardArc from "../components/HeroCardArc";
@@ -99,9 +101,9 @@ function PlanCard({ icon: Icon, eyebrow, title, bullets, cta, highlight, badge, 
 
   return (
     <div
-      className={`relative flex flex-col rounded-[var(--radius-card)] border p-6 sm:p-7 ${highlight
-        ? "border-[var(--color-accent)]/40 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-20px_rgba(215,255,62,0.35)]"
-        : "border-[var(--color-border)] bg-[var(--color-surface)]"
+      className={`group relative flex flex-col rounded-[var(--radius-card)] border p-6 transition-[transform,box-shadow,border-color] duration-300 [transition-timing-function:var(--ease-snap)] hover:-translate-y-1 sm:p-7 ${highlight
+        ? "border-[var(--color-accent)]/40 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-20px_rgba(215,255,62,0.35)] hover:shadow-[0_0_70px_-15px_rgba(215,255,62,0.45)]"
+        : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-border-strong)] hover:shadow-[0_16px_40px_-24px_rgba(0,0,0,0.6)]"
         }`}
     >
       {badge && (
@@ -110,7 +112,7 @@ function PlanCard({ icon: Icon, eyebrow, title, bullets, cta, highlight, badge, 
         </span>
       )}
       <div
-        className={`flex h-9 w-9 items-center justify-center rounded-full ${highlight ? "bg-[var(--color-accent)] text-[var(--color-accent-ink)]" : "bg-[var(--color-surface-3)] text-[var(--color-text-soft)]"
+        className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-300 [transition-timing-function:var(--ease-snap)] group-hover:scale-110 ${highlight ? "bg-[var(--color-accent)] text-[var(--color-accent-ink)]" : "bg-[var(--color-surface-3)] text-[var(--color-text-soft)]"
           }`}
       >
         <Icon size={19} weight={highlight ? "fill" : "bold"} />
@@ -138,7 +140,9 @@ function PlanCard({ icon: Icon, eyebrow, title, bullets, cta, highlight, badge, 
 
 export default function LandingPage() {
   return (
-    <div className="min-h-[100dvh] bg-[var(--color-base)]">
+    <div className="relative min-h-[100dvh] bg-[var(--color-base)]">
+      <BackgroundFX />
+      <div className="relative z-10">
       {/* Nav */}
       <header className="sticky top-0 z-30 border-b border-[var(--color-border-soft)] bg-[var(--color-base)]/90 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -202,8 +206,8 @@ export default function LandingPage() {
       </section>
 
       {/* Panel #1 — balances (panel left, text right) */}
-      <section className="border-t border-[var(--color-border-soft)] bg-[var(--color-base-raised)]">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
+      <section className="border-t border-[var(--color-border-soft)] bg-[var(--color-base-raised)]/92">
+        <Reveal className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
           <LedgerPreview />
           <div>
             <span className="text-xs font-medium text-[var(--color-accent)]">01 · Real-time balances</span>
@@ -215,12 +219,12 @@ export default function LandingPage() {
               no spreadsheet, no waiting on someone to "do the math."
             </p>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Panel #2 — settle-up (text left, panel right) */}
       <section className="border-t border-[var(--color-border-soft)]">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
+        <Reveal className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
           <div className="lg:order-1">
             <span className="text-xs font-medium text-[var(--color-accent)]">02 · Settle-up plan</span>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
@@ -235,12 +239,12 @@ export default function LandingPage() {
           <div className="lg:order-2">
             <DebtGraphCollapse />
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Features — big visual + numbered list */}
-      <section className="border-t border-[var(--color-border-soft)] bg-[var(--color-base-raised)]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+      <section className="border-t border-[var(--color-border-soft)] bg-[var(--color-base-raised)]/92">
+        <Reveal className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <h2 className="text-center text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
             Everything a group needs
           </h2>
@@ -253,14 +257,14 @@ export default function LandingPage() {
               {NUMBERED_FEATURES.map((f) => (
                 <div
                   key={f.n}
-                  className="flex items-start gap-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+                  className="group flex items-start gap-4 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-[border-color,transform] duration-300 [transition-timing-function:var(--ease-snap)] hover:translate-x-1 hover:border-[var(--color-accent)]/40"
                 >
                   <span className="ledger-figure mt-0.5 text-xs font-medium text-[var(--color-text-faint)]">
                     {f.n}
                   </span>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <f.icon size={16} className="text-[var(--color-accent)]" />
+                      <f.icon size={16} className="text-[var(--color-accent)] transition-transform duration-300 [transition-timing-function:var(--ease-snap)] group-hover:scale-110" />
                       <h3 className="text-sm font-semibold text-[var(--color-text)]">{f.title}</h3>
                     </div>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-soft)]">{f.description}</p>
@@ -269,12 +273,12 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Two ways to run it */}
       <section className="border-t border-[var(--color-border-soft)]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <Reveal className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <h2 className="text-center text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
             Two ways to see it running
           </h2>
@@ -327,12 +331,12 @@ export default function LandingPage() {
               to="/register"
             />
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Final CTA band */}
-      <section className="border-t border-[var(--color-border-soft)] bg-[var(--color-base-raised)]">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 py-14 text-center sm:flex-row sm:px-6 sm:text-left">
+      <section className="border-t border-[var(--color-border-soft)] bg-[var(--color-base-raised)]/92">
+        <Reveal className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 py-14 text-center sm:flex-row sm:px-6 sm:text-left">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
               Ready to settle up?
@@ -349,7 +353,7 @@ export default function LandingPage() {
               </Button>
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* Footer */}
@@ -380,6 +384,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

@@ -86,6 +86,27 @@ body {
   white-space: nowrap;
 }
 
+/* Flowing background lines (BackgroundFX) — with pathLength={100} set on
+   each <path>, stroke-dasharray/dashoffset can work in normalized 0-100
+   units regardless of the curve's real geometric length. A single dash
+   the full length of the path, animated from mostly-hidden to fully-drawn
+   and back, reproduces the reference's pathLength 0.3->1 "growing line"
+   motion without needing to measure each path in JS. */
+.blncr-line {
+  stroke-dasharray: 100 100;
+  animation-name: blncr-line-draw;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes blncr-line-draw {
+  0%, 100% {
+    stroke-dashoffset: 70; /* ~30% of the line visible */
+  }
+  50% {
+    stroke-dashoffset: 0; /* fully drawn */
+  }
+}
+
 ::selection {
   background: var(--color-accent);
   color: var(--color-accent-ink);
