@@ -32,6 +32,15 @@ const IDLE_PHI_SPEED = 0.02; // baseline auto-rotate speed when untouched
 const FRICTION = 0.94; // per-frame velocity decay after release — higher = coasts longer
 const THETA_LIMIT = 1.3; // radians (~74°) — stops the drag short of flipping the globe upside down
 
+// Ambient, self-triggered motion (the idle auto-spin) is what
+// prefers-reduced-motion asks sites to drop — dragging remains available
+// since that's motion the user directly asked for, not motion happening to
+// them. HeroCardArc already respects this; the globe previously didn't.
+const prefersReducedMotion =
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+const REST_IDLE_PHI_SPEED = prefersReducedMotion ? 0 : IDLE_PHI_SPEED;
+
 function clamp(v, lo, hi) {
   return Math.min(hi, Math.max(lo, v));
 }
@@ -44,8 +53,9 @@ export default function GlobeLedger({ className = "" }) {
   // this ends up is where it stays.
   const rotationRef = useRef({ phi: 0, theta: 0.28 });
   // Angular velocity per frame. phi starts at the idle speed so it's already
-  // auto-rotating before anyone touches it; theta starts at 0 (no vertical drift).
-  const velocityRef = useRef({ phi: IDLE_PHI_SPEED, theta: 0 });
+  // auto-rotating before anyone touches it (unless reduced-motion is on,
+  // where it starts and stays at rest until dragged); theta starts at 0.
+  const velocityRef = useRef({ phi: REST_IDLE_PHI_SPEED, theta: 0 });
   const pointerRef = useRef(null); // last pointer {x, y} while dragging
   const isDraggingRef = useRef(false);
 
@@ -97,6 +107,10 @@ export default function GlobeLedger({ className = "" }) {
     let globe = null;
     let frameId = null;
     let cancelled = false;
+    // Starts true so the first frame() call (from init(), below) schedules
+    // normally; the IntersectionObserver below corrects this immediately if
+    // the canvas actually mounted off-screen.
+    let isVisible = true;
 
     const markers = [
       { location: YOU.location, size: 0.1, color: ACCENT, id: YOU.id },
@@ -114,6 +128,47 @@ export default function GlobeLedger({ className = "" }) {
       color: m.amount >= 0 ? CREDIT : DEBIT,
       id: m.id,
     }));
+
+    // Hoisted out of init() (rather than declared as a nested function
+    // inside it, as cobe's own demo does) so the IntersectionObserver below
+    // — which lives outside init()'s scope — can also call it to resume the
+    // loop after it's been stopped by scrolling off-screen.
+    function frame() {
+      if (cancelled || !globe) return;
+
+      if (!isDraggingRef.current) {
+        // Momentum: keep coasting on last known velocity, decaying via
+        // friction each frame. Nothing here ever pulls theta back toward
+        // its starting value — wherever it comes to rest is where it stays.
+        rotationRef.current.phi += velocityRef.current.phi;
+        rotationRef.current.theta = clamp(
+          rotationRef.current.theta + velocityRef.current.theta,
+          -THETA_LIMIT,
+          THETA_LIMIT
+        );
+        velocityRef.current.phi *= FRICTION;
+        velocityRef.current.theta *= FRICTION;
+
+        // Once the flung speed has mostly bled off, ease phi back toward
+        // the gentle idle auto-spin instead of drifting to a dead stop —
+        // or, under reduced-motion, ease back to a full stop instead.
+        if (Math.abs(velocityRef.current.phi) < IDLE_PHI_SPEED * 1.5) {
+          velocityRef.current.phi += (REST_IDLE_PHI_SPEED - velocityRef.current.phi) * 0.01;
+        }
+        if (Math.abs(velocityRef.current.theta) < 0.0002) {
+          velocityRef.current.theta = 0;
+        }
+      }
+      // While dragging, handlePointerMove above already wrote the latest
+      // phi/theta directly into rotationRef — nothing to do here but read it.
+
+      globe.update({ phi: rotationRef.current.phi, theta: rotationRef.current.theta });
+
+      // Scrolled off-screen: stop scheduling frames entirely (no rAF churn,
+      // no GPU work) rather than continuing to spin an invisible globe.
+      // The observer below calls frame() again once it re-enters view.
+      frameId = isVisible ? requestAnimationFrame(frame) : null;
+    }
 
     function init() {
       if (cancelled || globe) return;
@@ -160,46 +215,31 @@ export default function GlobeLedger({ className = "" }) {
 
       // cobe v2 removed the old onRender-callback API — createGlobe() now
       // renders exactly one frame at creation and never again on its own.
-      // Driving rotation means calling globe.update() ourselves, every frame.
-      function frame() {
-        if (cancelled) return;
-
-        if (!isDraggingRef.current) {
-          // Momentum: keep coasting on last known velocity, decaying via
-          // friction each frame. Nothing here ever pulls theta back toward
-          // its starting value — wherever it comes to rest is where it stays.
-          rotationRef.current.phi += velocityRef.current.phi;
-          rotationRef.current.theta = clamp(
-            rotationRef.current.theta + velocityRef.current.theta,
-            -THETA_LIMIT,
-            THETA_LIMIT
-          );
-          velocityRef.current.phi *= FRICTION;
-          velocityRef.current.theta *= FRICTION;
-
-          // Once the flung speed has mostly bled off, ease phi back toward
-          // the gentle idle auto-spin instead of drifting to a dead stop.
-          if (Math.abs(velocityRef.current.phi) < IDLE_PHI_SPEED * 1.5) {
-            velocityRef.current.phi += (IDLE_PHI_SPEED - velocityRef.current.phi) * 0.01;
-          }
-          if (Math.abs(velocityRef.current.theta) < 0.0002) {
-            velocityRef.current.theta = 0;
-          }
-        }
-        // While dragging, handlePointerMove above already wrote the latest
-        // phi/theta directly into rotationRef — nothing to do here but read it.
-
-        globe.update({ phi: rotationRef.current.phi, theta: rotationRef.current.theta });
-        frameId = requestAnimationFrame(frame);
-      }
+      // Driving rotation means calling globe.update() ourselves, every frame
+      // (frame() defined above, outside init — see comment there for why).
       frame();
     }
 
     requestAnimationFrame(init);
 
+    let observer = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        (entries) => {
+          isVisible = entries[0]?.isIntersecting ?? true;
+          // Loop had stopped itself (frameId null) while off-screen —
+          // restart it now that it's back in view.
+          if (isVisible && frameId === null && globe) frame();
+        },
+        { rootMargin: "100px" }
+      );
+      observer.observe(canvas);
+    }
+
     return () => {
       cancelled = true;
       if (frameId) cancelAnimationFrame(frameId);
+      if (observer) observer.disconnect();
       if (globe) globe.destroy();
     };
   }, []);

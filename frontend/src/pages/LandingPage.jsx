@@ -15,7 +15,7 @@ import Button from "../components/Button";
 import Avatar from "../components/Avatar";
 import LedgerPreview from "../components/LedgerPreview";
 import HeroCardArc from "../components/HeroCardArc";
-import GlobeLedger from "../components/GlobeLedger";
+import GlobeLedger from "../components/LazyGlobeLedger";
 import DebtGraphCollapse from "../components/DebtGraphCollapse";
 import { formatSignedMoney } from "../lib/format";
 import logo from "../assets/logo.svg";
