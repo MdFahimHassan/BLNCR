@@ -13,6 +13,8 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const GroupPage = lazy(() => import("./pages/GroupPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 
 // Minimal, layout-neutral fallback — avoids shipping a spinner component
 // into the landing page's bundle just to cover a ~100-200ms chunk fetch.
@@ -60,6 +62,8 @@ function AppRoutes() {
             </AuthRedirect>
           }
         />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route
           path="/dashboard"
           element={

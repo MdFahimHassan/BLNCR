@@ -407,8 +407,16 @@ export default function LandingPage() {
               </a>
             </div>
           </div>
-          <div className="mt-6 border-t border-[var(--color-border-soft)] pt-6 text-center text-xs text-[var(--color-text-faint)] sm:text-left">
-            © {new Date().getFullYear()} BLNCR · MIT License
+          <div className="mt-6 flex flex-col items-center gap-3 border-t border-[var(--color-border-soft)] pt-6 text-center text-xs text-[var(--color-text-faint)] sm:flex-row sm:justify-between sm:text-left">
+            <span>© {new Date().getFullYear()} BLNCR · MIT License</span>
+            <nav className="flex items-center gap-4">
+              <Link to="/terms" className="hover:text-[var(--color-text-soft)] transition-colors">
+                Terms
+              </Link>
+              <Link to="/privacy" className="hover:text-[var(--color-text-soft)] transition-colors">
+                Privacy
+              </Link>
+            </nav>
           </div>
         </div>
       </footer>
