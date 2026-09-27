@@ -21,7 +21,7 @@ export default function ActivityFeed({ items, currentUserId }) {
           <div
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] ${
               item.type === "SETTLEMENT"
-                ? "bg-[var(--color-credit-soft)] text-[var(--color-credit)]"
+                ? "bg-[var(--color-credit-soft)] text-[var(--color-credit-text)]"
                 : "bg-[var(--color-surface-3)] text-[var(--color-text-faint)]"
             }`}
           >
@@ -48,7 +48,7 @@ export default function ActivityFeed({ items, currentUserId }) {
 
           <span
             className={`ledger-figure shrink-0 text-sm font-medium ${
-              item.type === "SETTLEMENT" ? "text-[var(--color-credit)]" : "text-[var(--color-text)]"
+              item.type === "SETTLEMENT" ? "text-[var(--color-credit-text)]" : "text-[var(--color-text)]"
             }`}
           >
             {formatMoney(item.amount)}

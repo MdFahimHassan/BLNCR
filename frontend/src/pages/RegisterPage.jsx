@@ -94,7 +94,7 @@ export default function RegisterPage() {
             label="Password"
             htmlFor="password"
             hint={
-              <span className={passwordValid ? "text-[var(--color-credit)]" : undefined}>
+              <span className={passwordValid ? "text-[var(--color-credit-text)]" : undefined}>
                 At least 8 characters
               </span>
             }
@@ -140,7 +140,7 @@ export default function RegisterPage() {
             </span>
           </label>
           {agreedTouched && !agreed && (
-            <p className="-mt-2 text-xs text-[var(--color-debit)]">
+            <p className="-mt-2 text-xs text-[var(--color-debit-text)]">
               You need to agree before creating an account.
             </p>
           )}
@@ -152,7 +152,7 @@ export default function RegisterPage() {
 
         <p className="mt-5 text-center text-sm text-[var(--color-text-faint)]">
           Already have an account?{" "}
-          <Link to="/login" className="font-medium text-[var(--color-text)] hover:text-[var(--color-accent)]">
+          <Link to="/login" className="font-medium text-[var(--color-text)] hover:text-[var(--color-accent-text)]">
             Log in
           </Link>
         </p>

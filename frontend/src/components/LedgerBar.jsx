@@ -25,7 +25,7 @@ export default function LedgerBar({ name, id, isYou, value, maxAbs }) {
         <div className="absolute inset-y-0 left-0 right-1/2 flex justify-end overflow-hidden">
           {isDebit && (
             <div
-              className="h-full rounded-l-[3px] bg-[var(--color-debit)]/70"
+              className="h-full rounded-l-[3px] bg-[var(--color-debit)]/90"
               style={{ width: `${pct}%` }}
             />
           )}
@@ -33,7 +33,7 @@ export default function LedgerBar({ name, id, isYou, value, maxAbs }) {
         <div className="absolute inset-y-0 left-1/2 right-0 flex overflow-hidden">
           {isCredit && (
             <div
-              className="h-full rounded-r-[3px] bg-[var(--color-credit)]/70"
+              className="h-full rounded-r-[3px] bg-[var(--color-credit)]/90"
               style={{ width: `${pct}%` }}
             />
           )}
@@ -43,9 +43,9 @@ export default function LedgerBar({ name, id, isYou, value, maxAbs }) {
       <span
         className={`ledger-figure w-20 shrink-0 text-right text-sm font-medium ${
           isCredit
-            ? "text-[var(--color-credit)]"
+            ? "text-[var(--color-credit-text)]"
             : isDebit
-            ? "text-[var(--color-debit)]"
+            ? "text-[var(--color-debit-text)]"
             : "text-[var(--color-text-faint)]"
         }`}
       >

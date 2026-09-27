@@ -69,6 +69,7 @@ export default function HeroCardArc() {
     if (reduceMotion) return;
 
     intervalRef.current = setInterval(() => {
+      if (document.documentElement.classList.contains("vt-transitioning")) return;
       setOrder((prev) => [prev[4], prev[0], prev[1], prev[2], prev[3]]);
     }, ROTATE_MS);
 

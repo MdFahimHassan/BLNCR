@@ -69,7 +69,7 @@ export default function SettleUpModal({ open, onClose, groupId, members, prefill
         </div>
 
         {fromUserId && toUserId && fromUserId === String(toUserId) && (
-          <p className="text-xs text-[var(--color-debit)]">Pick two different people.</p>
+          <p className="text-xs text-[var(--color-debit-text)]">Pick two different people.</p>
         )}
 
         <Field label="Amount" htmlFor="settle-amount">

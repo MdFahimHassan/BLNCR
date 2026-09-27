@@ -17,7 +17,7 @@ export default function GroupCard({ group }) {
         </div>
         <ArrowRight
           size={16}
-          className="shrink-0 text-[var(--color-text-faint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-accent)]"
+          className="shrink-0 text-[var(--color-text-faint)] transition-transform group-hover:translate-x-0.5 group-hover:text-[var(--color-accent-text)]"
         />
       </div>
 

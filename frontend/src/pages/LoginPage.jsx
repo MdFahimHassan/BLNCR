@@ -92,7 +92,7 @@ export default function LoginPage() {
 
         <p className="mt-5 text-center text-sm text-[var(--color-text-faint)]">
           New to BLNCR?{" "}
-          <Link to="/register" className="font-medium text-[var(--color-text)] hover:text-[var(--color-accent)]">
+          <Link to="/register" className="font-medium text-[var(--color-text)] hover:text-[var(--color-accent-text)]">
             Create an account
           </Link>
         </p>

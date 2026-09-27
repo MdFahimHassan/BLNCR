@@ -14,6 +14,7 @@ import {
   Terminal,
 } from "@phosphor-icons/react";
 import Button from "../components/Button";
+import ThemeToggle from "../components/ThemeToggle";
 import Reveal from "../components/Reveal";
 import BackgroundFX from "../components/BackgroundFX";
 import Avatar from "../components/Avatar";
@@ -68,7 +69,7 @@ function SettleUpPanel() {
     <div className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 sm:p-6">
       <div className="mb-4 flex items-center justify-between">
         <span className="text-xs font-medium text-[var(--color-text-faint)]">Settle-up plan</span>
-        <span className="ledger-figure rounded-full bg-[var(--color-credit-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-credit)]">
+        <span className="ledger-figure rounded-full bg-[var(--color-credit-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-credit-text)]">
           optimal
         </span>
       </div>
@@ -94,7 +95,7 @@ function SettleUpPanel() {
       </div>
       <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-xs text-[var(--color-text-faint)]">
         <span>5 raw debts, simplified</span>
-        <span className="ledger-figure font-medium text-[var(--color-accent)]">2 payments</span>
+        <span className="ledger-figure font-medium text-[var(--color-accent-text)]">2 payments</span>
       </div>
     </div>
   );
@@ -128,7 +129,7 @@ function PlanCard({ icon: Icon, eyebrow, title, bullets, cta, highlight, badge, 
       <ul className="mt-5 flex flex-col gap-2.5">
         {bullets.map((b, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-[var(--color-text-soft)]">
-            <CheckCircle size={16} className="mt-0.5 shrink-0 text-[var(--color-credit)]" />
+            <CheckCircle size={16} className="mt-0.5 shrink-0 text-[var(--color-credit-text)]" />
             <span>{b}</span>
           </li>
         ))}
@@ -174,6 +175,7 @@ export default function LandingPage() {
             <Link to="/register">
               <Button size="sm">Get started</Button>
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -186,7 +188,7 @@ export default function LandingPage() {
             Minimum cash flow algorithm inside
           </div>
           <h1 className="text-4xl font-semibold tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
-            Split fairly. Settle in the <span className="text-[var(--color-accent)]">fewest payments</span>.
+            Split fairly. Settle in the <span className="text-[var(--color-accent-text)]">fewest payments</span>.
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-[15px] leading-relaxed text-[var(--color-text-soft)]">
             Not just who owes what, BLNCR runs a debt-simplification algorithm to find the fewest payments that settle the group.
@@ -215,9 +217,9 @@ export default function LandingPage() {
         <Reveal className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
           <LedgerPreview />
           <div>
-            <span className="text-xs font-medium text-[var(--color-accent)]">01 · Real-time balances</span>
+            <span className="text-xs font-medium text-[var(--color-accent-text)]">01 · Real-time balances</span>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
-              Balances that <span className="text-[var(--color-accent)]">update</span> themselves
+              Balances that <span className="text-[var(--color-accent-text)]">update</span> themselves
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
               Every member's net position recalculates the moment an expense lands -
@@ -231,9 +233,9 @@ export default function LandingPage() {
       <section className="border-t border-[var(--color-border-soft)]">
         <Reveal className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
           <div className="lg:order-1">
-            <span className="text-xs font-medium text-[var(--color-accent)]">02 · Settle-up plan</span>
+            <span className="text-xs font-medium text-[var(--color-accent-text)]">02 · Settle-up plan</span>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
-              The <span className="text-[var(--color-accent)]">fewest</span> possible payments
+              The <span className="text-[var(--color-accent-text)]">fewest</span> possible payments
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
               True minimum-transaction debt netting is NP-hard in general. BLNCR's greedy
@@ -269,7 +271,7 @@ export default function LandingPage() {
                   </span>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <f.icon size={16} className="text-[var(--color-accent)] transition-transform duration-300 [transition-timing-function:var(--ease-snap)] group-hover:scale-110" />
+                      <f.icon size={16} className="text-[var(--color-accent-text)] transition-transform duration-300 [transition-timing-function:var(--ease-snap)] group-hover:scale-110" />
                       <h3 className="text-sm font-semibold text-[var(--color-text)]">{f.title}</h3>
                     </div>
                     <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-soft)]">{f.description}</p>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import createGlobe from "cobe";
+import { useTheme } from "../context/ThemeContext";
 
 // Replace with real data later (e.g. the signed-in user's actual cross-group
 // balances). Amounts are in whole dollars for the demo; wire to your real
@@ -25,8 +26,21 @@ const DEBIT = [0.984, 0.443, 0.522]; // --color-debit    #fb7185
 // invisible even though they're technically drawing. diffuse needs to be much
 // higher too for real light/shadow contrast across the sphere (checked this
 // against a real production dark-mode cobe globe, not guessed twice in a row).
-const GLOBE_BASE = [0.92, 0.94, 0.9];
-const GLOBE_GLOW = [0.22, 0.26, 0.11];
+//
+// The ocean stays transparent either way (dark:1 never changes), so on a
+// light page it's the dots that would go invisible if left bright — the
+// exact same near-white-on-white problem, mirrored, so light mode uses a
+// dark charcoal base instead. A near-black base needs its own brightness/
+// diffuse tuning though, not just the dark-theme numbers reused: mapBrightness
+// multiplies the base color, so a color that's already close to 0 barely
+// moves no matter what diffuse does — the dots go flat/matte instead of
+// showing the lit-vs-shadow falloff that reads as a "prominent, dotted
+// sphere" instead of a solid disc. Light mode's brightness/diffuse are
+// pushed up specifically to restore that range on a dark base.
+const GLOBE_COLORS = {
+  dark: { base: [0.92, 0.94, 0.9], glow: [0.22, 0.26, 0.11], brightness: 4, diffuse: 3 },
+  light: { base: [0.16, 0.17, 0.19], glow: [0.82, 0.83, 0.8], brightness: 7, diffuse: 4.5 },
+};
 
 const IDLE_PHI_SPEED = 0.02; // baseline auto-rotate speed when untouched
 const FRICTION = 0.94; // per-frame velocity decay after release — higher = coasts longer
@@ -47,6 +61,7 @@ function clamp(v, lo, hi) {
 
 export default function GlobeLedger({ className = "" }) {
   const canvasRef = useRef(null);
+  const { theme } = useTheme();
 
   // Current absolute view angles, mutated directly by both dragging and the
   // momentum/idle loop — there's no "rest" state to snap back to, wherever
@@ -58,6 +73,16 @@ export default function GlobeLedger({ className = "" }) {
   const velocityRef = useRef({ phi: REST_IDLE_PHI_SPEED, theta: 0 });
   const pointerRef = useRef(null); // last pointer {x, y} while dragging
   const isDraggingRef = useRef(false);
+  // Read fresh every frame by the render loop below, rather than baked into
+  // the globe at creation — lets baseColor/glowColor/brightness/diffuse
+  // update live on a theme flip via globe.update() (a cheap uniform change)
+  // instead of tearing down and recreating the whole WebGL globe, which is
+  // what a `[theme]` dependency on the main effect used to do and was the
+  // actual source of the toggle-animation jank when the globe was on screen.
+  const themeConfigRef = useRef(GLOBE_COLORS[theme]);
+  useEffect(() => {
+    themeConfigRef.current = GLOBE_COLORS[theme];
+  }, [theme]);
 
   const handlePointerDown = useCallback((e) => {
     isDraggingRef.current = true;
@@ -136,6 +161,18 @@ export default function GlobeLedger({ className = "" }) {
     function frame() {
       if (cancelled || !globe) return;
 
+      // Same reasoning as the LedgerPreview tween freeze: this fires a real
+      // WebGL draw call every frame, which is exactly the kind of ongoing
+      // GPU work that competes with the browser's own compositing of the
+      // theme-toggle wipe. Skipping the draw (not the rAF scheduling) for
+      // the transition's brief duration means the globe just holds its
+      // current frame — imperceptible — instead of fighting the wipe for
+      // frame time.
+      if (document.documentElement.classList.contains("vt-transitioning")) {
+        frameId = isVisible ? requestAnimationFrame(frame) : null;
+        return;
+      }
+
       if (!isDraggingRef.current) {
         // Momentum: keep coasting on last known velocity, decaying via
         // friction each frame. Nothing here ever pulls theta back toward
@@ -162,7 +199,14 @@ export default function GlobeLedger({ className = "" }) {
       // While dragging, handlePointerMove above already wrote the latest
       // phi/theta directly into rotationRef — nothing to do here but read it.
 
-      globe.update({ phi: rotationRef.current.phi, theta: rotationRef.current.theta });
+      globe.update({
+        phi: rotationRef.current.phi,
+        theta: rotationRef.current.theta,
+        baseColor: themeConfigRef.current.base,
+        glowColor: themeConfigRef.current.glow,
+        diffuse: themeConfigRef.current.diffuse,
+        mapBrightness: themeConfigRef.current.brightness,
+      });
 
       // Scrolled off-screen: stop scheduling frames entirely (no rAF churn,
       // no GPU work) rather than continuing to spin an invisible globe.
@@ -190,16 +234,16 @@ export default function GlobeLedger({ className = "" }) {
         phi: 0,
         theta: 0.28,
         dark: 1, // dark dotted globe — the CDN demo this is adapted from used a light one
-        diffuse: 3,
+        diffuse: themeConfigRef.current.diffuse,
         mapSamples: 16000,
-        mapBrightness: 4,
+        mapBrightness: themeConfigRef.current.brightness,
         // Small floor so the very first frame or two (drawn before the
         // embedded map texture has finished decoding) still show *something*
         // instead of a blank sphere.
         mapBaseBrightness: 0.05,
-        baseColor: GLOBE_BASE,
+        baseColor: themeConfigRef.current.base,
         markerColor: ACCENT,
-        glowColor: GLOBE_GLOW,
+        glowColor: themeConfigRef.current.glow,
         markers,
         arcs,
         arcColor: ACCENT,
@@ -273,6 +317,10 @@ export default function GlobeLedger({ className = "" }) {
       window.removeEventListener("orientationchange", handleResize);
       if (globe) globe.destroy();
     };
+    // Mount once — theme changes are now handled live inside frame() via
+    // themeConfigRef (see above) rather than by tearing down and recreating
+    // the WebGL globe, which used to happen here and was the main cause of
+    // the toggle animation stuttering whenever this section was on screen.
   }, []);
 
   return (
@@ -313,7 +361,7 @@ export default function GlobeLedger({ className = "" }) {
           className="ledger-figure rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap"
           style={{
             borderColor: "var(--color-accent)",
-            color: "var(--color-accent)",
+            color: "var(--color-accent-text)",
             background: "var(--color-surface)",
           }}
         >
@@ -360,7 +408,7 @@ export default function GlobeLedger({ className = "" }) {
           <span
             className="ledger-figure whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
             style={{
-              color: m.amount >= 0 ? "var(--color-credit)" : "var(--color-debit)",
+              color: m.amount >= 0 ? "var(--color-credit-text)" : "var(--color-debit-text)",
               background: m.amount >= 0 ? "var(--color-credit-soft)" : "var(--color-debit-soft)",
             }}
           >

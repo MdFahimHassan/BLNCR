@@ -120,7 +120,7 @@ export default function TermsPage() {
           href={REPO_URL}
           target="_blank"
           rel="noreferrer"
-          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent)]"
+          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent-text)]"
         >
           github.com/MdFahimHassan/BLNCR
         </a>
@@ -130,7 +130,7 @@ export default function TermsPage() {
           href="https://blncr-xi.vercel.app"
           target="_blank"
           rel="noreferrer"
-          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent)]"
+          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent-text)]"
         >
           blncr-xi.vercel.app
         </a>
@@ -149,7 +149,7 @@ export default function TermsPage() {
         Questions about these Terms? Reach out at{" "}
         <a
           href={`mailto:${CONTACT_EMAIL}`}
-          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent)]"
+          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent-text)]"
         >
           {CONTACT_EMAIL}
         </a>

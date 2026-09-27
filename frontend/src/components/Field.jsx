@@ -8,7 +8,7 @@ export default function Field({ label, error, hint, className = "", children, ht
       )}
       {children}
       {error ? (
-        <p className="text-xs text-[var(--color-debit)]">{error}</p>
+        <p className="text-xs text-[var(--color-debit-text)]">{error}</p>
       ) : hint ? (
         <p className="text-xs text-[var(--color-text-faint)]">{hint}</p>
       ) : null}

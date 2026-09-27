@@ -56,7 +56,7 @@ export default function DebtGraphCollapse() {
             </span>
           </Crossfade>
           <Crossfade show={settled}>
-            <span className="ledger-figure rounded-full bg-[var(--color-credit-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-credit)]">
+            <span className="ledger-figure rounded-full bg-[var(--color-credit-soft)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-credit-text)]">
               optimal
             </span>
           </Crossfade>
@@ -74,10 +74,10 @@ export default function DebtGraphCollapse() {
       {/* Caption */}
       <div className="relative mb-2.5 h-[18px] text-center text-[13px] font-medium">
         <Crossfade show={!settled}>
-          <span className="w-full text-[var(--color-debit)]">everyone owes a bit of everyone</span>
+          <span className="w-full text-[var(--color-debit-text)]">everyone owes a bit of everyone</span>
         </Crossfade>
         <Crossfade show={settled}>
-          <span className="w-full text-[var(--color-accent)]">→ collapsed to the minimum</span>
+          <span className="w-full text-[var(--color-accent-text)]">→ collapsed to the minimum</span>
         </Crossfade>
       </div>
 
@@ -86,7 +86,7 @@ export default function DebtGraphCollapse() {
         <svg viewBox="0 0 400 224" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
           <defs>
             <marker id="dgc-arrow-raw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M0,0 L10,5 L0,10 z" fill="#fb7185" />
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--color-debit)" />
             </marker>
             <filter id="dgc-glow" x="-150%" y="-150%" width="400%" height="400%">
               <feGaussianBlur stdDeviation="2.4" result="blur" />
@@ -107,16 +107,16 @@ export default function DebtGraphCollapse() {
               <path
                 d={e.d}
                 fill="none"
-                stroke="#fb7185"
+                stroke="var(--color-debit)"
                 strokeWidth="1.75"
                 strokeDasharray="1 5"
                 strokeLinecap="round"
                 markerEnd="url(#dgc-arrow-raw)"
               />
-              <circle r="3.2" fill="#fb7185" opacity="0.5" filter="url(#dgc-glow)">
+              <circle r="3.2" fill="var(--color-debit)" opacity="0.5" filter="url(#dgc-glow)">
                 <animateMotion dur="2.6s" begin={`${i * 0.4}s`} repeatCount="indefinite" path={e.d} />
               </circle>
-              <circle r="1.5" fill="#ffd3da">
+              <circle r="1.5" fill="var(--color-debit-core)">
                 <animateMotion dur="2.6s" begin={`${i * 0.4}s`} repeatCount="indefinite" path={e.d} />
               </circle>
             </g>
@@ -132,14 +132,14 @@ export default function DebtGraphCollapse() {
               <path
                 d={e.d}
                 fill="none"
-                stroke="#d7ff3e"
+                stroke="var(--color-accent)"
                 strokeWidth="2.75"
                 strokeLinecap="round"
               />
-              <circle r="3.6" fill="#d7ff3e" opacity="0.55" filter="url(#dgc-glow)">
+              <circle r="3.6" fill="var(--color-accent)" opacity="0.55" filter="url(#dgc-glow)">
                 <animateMotion dur="2.2s" begin={`${i * 0.5}s`} repeatCount="indefinite" path={e.d} />
               </circle>
-              <circle r="1.7" fill="#f4ffb8">
+              <circle r="1.7" fill="var(--color-accent-core)">
                 <animateMotion dur="2.2s" begin={`${i * 0.5}s`} repeatCount="indefinite" path={e.d} />
               </circle>
             </g>
@@ -161,7 +161,7 @@ export default function DebtGraphCollapse() {
         {RAW_EDGES.map((e, i) => (
           <div
             key={`raw-amt-${i}`}
-            className="ledger-figure absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[var(--color-border-soft)] bg-[var(--color-base-raised)] px-1.5 py-px text-[10.5px] font-medium text-[var(--color-debit)] transition-opacity duration-450"
+            className="ledger-figure absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[var(--color-border-soft)] bg-[var(--color-base-raised)] px-1.5 py-px text-[10.5px] font-medium text-[var(--color-debit-text)] transition-opacity duration-450"
             style={{ left: e.left, top: e.top, opacity: settled ? 0 : 0.85 }}
           >
             ${e.amount}
@@ -171,7 +171,7 @@ export default function DebtGraphCollapse() {
         {FINAL_EDGES.map((e, i) => (
           <div
             key={`final-amt-${i}`}
-            className="ledger-figure absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[var(--color-border)] bg-[var(--color-base-raised)] px-1.5 py-0.5 text-xs font-semibold text-[var(--color-accent)] transition-opacity delay-300 duration-500"
+            className="ledger-figure absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-[var(--color-border)] bg-[var(--color-base-raised)] px-1.5 py-0.5 text-xs font-semibold text-[var(--color-accent-text)] transition-opacity delay-300 duration-500"
             style={{ left: e.left, top: e.top, opacity: settled ? 1 : 0 }}
           >
             ${e.amount}
@@ -182,7 +182,7 @@ export default function DebtGraphCollapse() {
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between border-t border-[var(--color-border-soft)] pt-3 text-xs text-[var(--color-text-faint)]">
         <span>5 raw debts, simplified</span>
-        <span className="ledger-figure relative inline-block h-4 w-20 font-medium text-[var(--color-accent)]">
+        <span className="ledger-figure relative inline-block h-4 w-20 font-medium text-[var(--color-accent-text)]">
           <Crossfade show={!settled}>
             <span className="w-full text-right">5 payments</span>
           </Crossfade>

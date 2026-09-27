@@ -79,10 +79,29 @@ function useAnimatedNumber(target, { active = true } = {}) {
     const to = target;
     if (from === to) return;
 
-    const start = performance.now();
+    let start = performance.now();
+    let lastNow = start;
     cancelAnimationFrame(rafRef.current);
 
     const tick = (now) => {
+      // A theme toggle's circular wipe is a one-shot, full-page View
+      // Transition — any state update anywhere on the page during that
+      // ~0.5s window forces extra render/layout work competing with the
+      // browser's own compositing of the wipe. This tween fires setState
+      // every frame for up to 900ms and was doing exactly that whenever a
+      // toggle happened to land mid-tween (which, cycling every 3.6s, is
+      // more often than not "rare"). Freezing it — by holding the tween's
+      // clock still (advancing `start` by the same wall-clock delta rather
+      // than skipping the frame outright) — means it picks back up exactly
+      // where it left off once the wipe finishes, with no visible jump.
+      const dt = now - lastNow;
+      lastNow = now;
+      if (document.documentElement.classList.contains("vt-transitioning")) {
+        start += dt;
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
       const elapsed = now - start;
       const p = Math.min(1, elapsed / TWEEN_MS);
       const eased = easeInOutCubic(p);
@@ -134,7 +153,7 @@ function Row({ name, id, value, maxAbs, ready }) {
         <div className="absolute inset-y-0 left-0 right-1/2 flex justify-end overflow-hidden">
           {isDebitBar && (
             <div
-              className="h-full rounded-l-[3px] bg-[var(--color-debit)]/70"
+              className="h-full rounded-l-[3px] bg-[var(--color-debit)]/90"
               style={{ width: `${pct}%` }}
             />
           )}
@@ -142,7 +161,7 @@ function Row({ name, id, value, maxAbs, ready }) {
         <div className="absolute inset-y-0 left-1/2 right-0 flex overflow-hidden">
           {isCreditBar && (
             <div
-              className="h-full rounded-r-[3px] bg-[var(--color-credit)]/70"
+              className="h-full rounded-r-[3px] bg-[var(--color-credit)]/90"
               style={{ width: `${pct}%` }}
             />
           )}
@@ -152,9 +171,9 @@ function Row({ name, id, value, maxAbs, ready }) {
       <span
         className={`ledger-figure w-16 shrink-0 text-right text-xs font-medium transition-colors duration-300 sm:text-sm ${
           isCreditText
-            ? "text-[var(--color-credit)]"
+            ? "text-[var(--color-credit-text)]"
             : isDebitText
-            ? "text-[var(--color-debit)]"
+            ? "text-[var(--color-debit-text)]"
             : "text-[var(--color-text-faint)]"
         }`}
       >
@@ -182,6 +201,10 @@ export default function LedgerPreview({ className = "" }) {
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
+      // Skip this rotation if a theme wipe is mid-flight — advancing here
+      // would kick off a fresh 900ms tween (see useAnimatedNumber) right in
+      // the middle of it. It just tries again on the next 3.6s tick.
+      if (document.documentElement.classList.contains("vt-transitioning")) return;
       setSnapshotIndex((i) => (i + 1) % SNAPSHOTS.length);
     }, 3600);
     return () => clearInterval(timerRef.current);
@@ -207,7 +230,7 @@ export default function LedgerPreview({ className = "" }) {
 
       <div className="mt-5 flex items-center justify-between border-t border-[var(--color-border-soft)] pt-4 text-xs">
         <span className="text-[var(--color-text-faint)]">Settle-up plan</span>
-        <span className="ledger-figure font-medium text-[var(--color-accent)]">2 payments</span>
+        <span className="ledger-figure font-medium text-[var(--color-accent-text)]">2 payments</span>
       </div>
     </div>
   );

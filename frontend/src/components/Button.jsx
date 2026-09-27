@@ -8,7 +8,7 @@ const variants = {
   ghost:
     "bg-transparent text-[var(--color-text-soft)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:opacity-40",
   danger:
-    "bg-transparent text-[var(--color-debit)] hover:bg-[var(--color-debit-soft)] border border-[var(--color-debit)]/30 disabled:opacity-40",
+    "bg-transparent text-[var(--color-debit-text)] hover:bg-[var(--color-debit-soft)] border border-[var(--color-debit)]/30 disabled:opacity-40",
 };
 
 const sizes = {

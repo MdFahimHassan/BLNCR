@@ -49,7 +49,7 @@ export default function AppShell({ children }) {
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2 px-3.5 py-2 text-sm text-[var(--color-debit)] hover:bg-[var(--color-debit-soft)] transition-colors"
+                      className="flex w-full items-center gap-2 px-3.5 py-2 text-sm text-[var(--color-debit-text)] hover:bg-[var(--color-debit-soft)] transition-colors"
                     >
                       <SignOut size={15} />
                       Log out

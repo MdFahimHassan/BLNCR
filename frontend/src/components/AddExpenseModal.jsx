@@ -195,7 +195,7 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
               <button
                 type="button"
                 onClick={splitEvenly}
-                className="text-xs font-medium text-[var(--color-accent)] hover:underline"
+                className="text-xs font-medium text-[var(--color-accent-text)] hover:underline"
               >
                 Split evenly
               </button>
@@ -259,8 +259,8 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
             <p
               className={`text-xs ledger-figure ${
                 Math.abs(exactTotal - Number(amount || 0)) < 0.01
-                  ? "text-[var(--color-credit)]"
-                  : "text-[var(--color-debit)]"
+                  ? "text-[var(--color-credit-text)]"
+                  : "text-[var(--color-debit-text)]"
               }`}
             >
               ${exactTotal.toFixed(2)} of ${Number(amount || 0).toFixed(2)} assigned
@@ -270,8 +270,8 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
             <p
               className={`text-xs ledger-figure ${
                 Math.abs(percentTotal - 100) < 0.01
-                  ? "text-[var(--color-credit)]"
-                  : "text-[var(--color-debit)]"
+                  ? "text-[var(--color-credit-text)]"
+                  : "text-[var(--color-debit-text)]"
               }`}
             >
               {percentTotal.toFixed(2)}% of 100% assigned

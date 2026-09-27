@@ -44,6 +44,20 @@
   --color-credit-soft: #0f2420;
   --color-debit: #fb7185;
   --color-debit-soft: #2a1418;
+  --color-debit-core: #ffd3da;
+  --color-accent-core: #f4ffb8;
+
+  /* -text variants: same hue as their bg/icon counterpart, but this is the
+     one that gets used for plain body/heading text set directly on a page
+     or card surface. Kept as separate tokens (rather than reusing
+     --color-accent/-credit/-debit everywhere) because a color tuned to look
+     vivid as a button fill or badge chip is a completely different, and
+     often opposite, contrast requirement from that same color set as text —
+     in dark mode both happen to be the same hue/lightness, so these default
+     to identical values; the light theme below is where they diverge. */
+  --color-accent-text: var(--color-accent);
+  --color-credit-text: var(--color-credit);
+  --color-debit-text: var(--color-debit);
 
   --radius-card: 0.7rem;
   --radius-control: 0.55rem;
@@ -56,6 +70,45 @@
 
 html {
   color-scheme: dark;
+}
+
+/* Light theme — every value here is a deliberate inversion of its dark
+   counterpart above, not just "make the background white." A handful of
+   dark-mode colors (--color-accent/-credit/-debit, used as button fills,
+   badge chips and icon glyphs) stay exactly as-is, because a bright lime
+   or rose reads fine as a small colored chip on either a black or a white
+   page. The -text variants exist for exactly the opposite case: that same
+   bright lime/green/rose set as bare text directly on the page background
+   has plenty of contrast on near-black, but is nearly unreadable on a light
+   surface, so this block darkens those three specifically for legibility.
+   Everything else (surfaces, borders, base text) is inverted in lightness
+   so nothing that depended on a dark backdrop goes invisible. */
+html.light {
+  color-scheme: light;
+
+  --color-base: #faf9f6;
+  --color-base-raised: #f1efe8;
+
+  --color-surface: #ffffff;
+  --color-surface-2: #f5f3ee;
+  --color-surface-3: #ebe8e1;
+
+  --color-border: #e3e0d7;
+  --color-border-soft: #edebe4;
+  --color-border-strong: #cfcbc0;
+
+  --color-text: #17181a;
+  --color-text-soft: #5b5e64;
+  --color-text-faint: #6b6e75;
+
+  --color-credit-soft: #e3f8ee;
+  --color-debit-soft: #fbe6e9;
+  --color-debit-core: #7a1024;
+  --color-accent-core: #3d4400;
+
+  --color-accent-text: #2f5900;
+  --color-credit-text: #087a4d;
+  --color-debit-text: #c81e3a;
 }
 
 body {
@@ -117,6 +170,40 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Theme toggle — circular reveal driven by the View Transitions API.
+   Both snapshots' default cross-fade is switched off so the only motion
+   is the clip-path circle we animate by hand (see ThemeContext), which
+   always applies to the incoming (new) state while the outgoing state
+   sits underneath, unclipped. Unsupported browsers never enter this code
+   path at all — see the feature check in ThemeContext. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* For the ~half-second the circle reveal is playing, drop the two costliest
+   ongoing effects on the page: the header's backdrop-blur (rasterizing a
+   blurred backdrop is what the view-transition snapshot step spends most of
+   its time on — a well-known cost on both Chromium and WebKit, worse on
+   phones) and the BackgroundFX line animation (continuous stroke-dashoffset
+   repaints competing with the transition's own compositor work). Neither is
+   visible for a few hundred ms, and removing them is what turns this from a
+   janky freeze into an actually smooth wipe. */
+html.vt-transitioning .backdrop-blur-sm {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html.vt-transitioning .blncr-line {
+  animation-play-state: paused !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

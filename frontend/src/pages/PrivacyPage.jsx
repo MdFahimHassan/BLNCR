@@ -140,7 +140,7 @@ export default function PrivacyPage() {
         Questions about this policy or your data? Reach out at{" "}
         <a
           href={`mailto:${CONTACT_EMAIL}`}
-          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent)]"
+          className="text-[var(--color-text)] underline underline-offset-2 hover:text-[var(--color-accent-text)]"
         >
           {CONTACT_EMAIL}
         </a>
