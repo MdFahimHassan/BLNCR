@@ -3,6 +3,8 @@ import {
   ArrowRight,
   ArrowUpRight,
   GithubLogo,
+  LinkedinLogo,
+  EnvelopeSimple,
   Scales,
   Percent,
   ShieldCheck,
@@ -23,6 +25,9 @@ import { formatSignedMoney } from "../lib/format";
 import logo from "../assets/logo.svg";
 
 const REPO_URL = "https://github.com/MdFahimHassan/BLNCR";
+const PORTFOLIO_URL = "https://personal-portfolio-legacy110.vercel.app/";
+const LINKEDIN_URL = "https://www.linkedin.com/in/md-fahim-hassan";
+const EMAIL = "mdfahimhassanbd7@gmail.com";
 
 const TECH = ["Java 21", "Spring Boot", "PostgreSQL", "React", "Tailwind CSS", "Docker", "GitHub Actions"];
 
@@ -325,7 +330,7 @@ export default function LandingPage() {
               ]}
               cta={
                 <>
-                  Get started free <ArrowRight size={15} weight="bold" />
+                  Get started <ArrowRight size={15} weight="bold" />
                 </>
               }
               to="/register"
@@ -348,7 +353,7 @@ export default function LandingPage() {
           <div className="flex shrink-0 items-center gap-3">
             <Link to="/register">
               <Button size="lg">
-                Get started free
+                Get started for free
                 <ArrowRight size={16} weight="bold" />
               </Button>
             </Link>
@@ -365,19 +370,42 @@ export default function LandingPage() {
               <span className="text-sm font-semibold tracking-tight text-[var(--color-text)]">BLNCR</span>
             </div>
             <nav className="flex items-center gap-5 text-sm text-[var(--color-text-soft)]">
-              <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-[var(--color-text)] transition-colors">
-                Source
+              <a
+                href={PORTFOLIO_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-[var(--color-text)] transition-colors"
+              >
+                Built by Md. Fahim Hassan
               </a>
-              <span>Built by Md. Fahim Hassan</span>
             </nav>
-            <a
-              href={REPO_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
-            >
-              <GithubLogo size={16} />
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href={LINKEDIN_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="LinkedIn"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
+              >
+                <LinkedinLogo size={16} />
+              </a>
+              <a
+                href={`mailto:${EMAIL}`}
+                aria-label="Email"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
+              >
+                <EnvelopeSimple size={16} />
+              </a>
+              <a
+                href={REPO_URL}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="GitHub"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-text-soft)] hover:text-[var(--color-text)] transition-colors"
+              >
+                <GithubLogo size={16} />
+              </a>
+            </div>
           </div>
           <div className="mt-6 border-t border-[var(--color-border-soft)] pt-6 text-center text-xs text-[var(--color-text-faint)] sm:text-left">
             © {new Date().getFullYear()} BLNCR · MIT License

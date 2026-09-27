@@ -92,48 +92,64 @@ export default function HeroCardArc() {
   }, [order]);
 
   return (
-    <div className="relative mx-auto mt-4 h-[300px] w-full max-w-[1040px] scale-[0.62] sm:h-[360px] sm:scale-[0.82] lg:h-[420px] lg:scale-100">
-      {/* Horizon glow — soft overlapping radial fields only, no hard ring edges */}
-      <div
-        className="pointer-events-none absolute bottom-[-70px] left-1/2 h-[360px] w-[1160px] -translate-x-1/2 rounded-full blur-3xl"
-        style={{
-          background: "radial-gradient(closest-side, rgba(215,255,62,0.30) 0%, rgba(215,255,62,0.10) 42%, transparent 74%)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute bottom-[-16px] left-1/2 h-[110px] w-[760px] -translate-x-1/2 rounded-full blur-2xl"
-        style={{ background: "radial-gradient(closest-side, rgba(215,255,62,0.38), transparent 78%)" }}
-      />
+    // Why an outer + inner wrapper, rather than just shrinking the h-[...]
+    // values below to match the scale: the glow elements inside are
+    // positioned with hardcoded pixel offsets (bottom-[-70px], h-[360px])
+    // relative to THIS box's own declared height. Changing that height
+    // directly would shift what those offsets resolve to and subtly move
+    // the glow relative to the cards. Instead, the inner box keeps its
+    // original height/scale/every child untouched — this outer wrapper
+    // only fixes how much vertical space is *reserved in page flow*
+    // (h-[186px]/sm:h-[295px]/lg:h-[420px] = height × scale at each
+    // breakpoint), and centers the unchanged inner box inside it.
+    // Previously the reserved space (300/360/420px) didn't match the
+    // scaled visual output (186/295/420px), leaving ~114px of dead
+    // whitespace above and below the hero art on mobile, ~65px on
+    // small tablets.
+    <div className="relative mx-auto mt-4 flex h-[186px] w-full max-w-[1040px] items-center justify-center overflow-visible sm:h-[295px] lg:h-[420px]">
+      <div className="relative h-[300px] w-full shrink-0 scale-[0.62] sm:h-[360px] sm:scale-[0.82] lg:h-[420px] lg:scale-100">
+        {/* Horizon glow — soft overlapping radial fields only, no hard ring edges */}
+        <div
+          className="pointer-events-none absolute bottom-[-70px] left-1/2 h-[360px] w-[1160px] -translate-x-1/2 rounded-full blur-3xl"
+          style={{
+            background: "radial-gradient(closest-side, rgba(215,255,62,0.30) 0%, rgba(215,255,62,0.10) 42%, transparent 74%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute bottom-[-16px] left-1/2 h-[110px] w-[760px] -translate-x-1/2 rounded-full blur-2xl"
+          style={{ background: "radial-gradient(closest-side, rgba(215,255,62,0.38), transparent 78%)" }}
+        />
 
-      <div className="absolute inset-0" style={{ perspective: "1500px" }}>
-        {CARD_IMAGES.map((img, cardIndex) => {
-          const s = SLOTS[slotOf[cardIndex]];
-          return (
-            <div
-              key={cardIndex}
-              className="absolute left-1/2 top-1/2 transition-[transform,opacity,filter,box-shadow]"
-              style={{
-                zIndex: s.zIndex,
-                opacity: mounted ? s.opacity : 0,
-                filter: s.filter,
-                boxShadow: s.boxShadow,
-                willChange: "transform, opacity, filter",
-                transform: mounted
-                  ? `translate(-50%, -50%) translate(${s.x}px, ${s.y}px) scale(${s.scale})`
-                  : `translate(-50%, -50%) translate(${s.x}px, ${s.y + 20}px) scale(${s.scale * 0.94})`,
-                transitionDuration: `${TRANSITION_MS}ms`,
-                transitionTimingFunction: EASE,
-              }}
-            >
-              <img
-                src={img}
-                alt=""
-                draggable={false}
-                className="w-[220px] select-none rounded-lg"
-              />
-            </div>
-          );
-        })}
+        <div className="absolute inset-0" style={{ perspective: "1500px" }}>
+          {CARD_IMAGES.map((img, cardIndex) => {
+            const s = SLOTS[slotOf[cardIndex]];
+            return (
+              <div
+                key={cardIndex}
+                className="absolute left-1/2 top-1/2 transition-[transform,opacity,filter,box-shadow]"
+                style={{
+                  zIndex: s.zIndex,
+                  opacity: mounted ? s.opacity : 0,
+                  filter: s.filter,
+                  boxShadow: s.boxShadow,
+                  willChange: "transform, opacity, filter",
+                  transform: mounted
+                    ? `translate(-50%, -50%) translate(${s.x}px, ${s.y}px) scale(${s.scale})`
+                    : `translate(-50%, -50%) translate(${s.x}px, ${s.y + 20}px) scale(${s.scale * 0.94})`,
+                  transitionDuration: `${TRANSITION_MS}ms`,
+                  transitionTimingFunction: EASE,
+                }}
+              >
+                <img
+                  src={img}
+                  alt=""
+                  draggable={false}
+                  className="w-[220px] select-none rounded-lg"
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

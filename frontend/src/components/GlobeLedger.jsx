@@ -236,10 +236,41 @@ export default function GlobeLedger({ className = "" }) {
       observer.observe(canvas);
     }
 
+    // cobe sizes its internal render target once, at createGlobe() time —
+    // it never re-reads the canvas's CSS size on its own. Without this, a
+    // phone rotation or a resized browser window leaves the *element*
+    // filling its new container correctly (that part is just CSS), but the
+    // actual rendered globe stays locked to its original resolution and
+    // gets stretched to fit — noticeably softer/blurrier, not broken, but
+    // not sharp either. globe.update() accepts new width/height directly
+    // (cobe v2), so this just re-measures and pushes the new size in,
+    // rather than tearing down and recreating the whole globe.
+    let resizeTimer = null;
+    let lastWidth = null;
+    function handleResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (cancelled || !globe) return;
+        const newWidth = canvas.offsetWidth;
+        if (newWidth < 40 || newWidth === lastWidth) return;
+        lastWidth = newWidth;
+        globe.update({
+          width: newWidth,
+          height: newWidth,
+          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+        });
+      }, 150); // debounced — resize/orientationchange can fire repeatedly mid-gesture
+    }
+    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("orientationchange", handleResize, { passive: true });
+
     return () => {
       cancelled = true;
       if (frameId) cancelAnimationFrame(frameId);
       if (observer) observer.disconnect();
+      clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
       if (globe) globe.destroy();
     };
   }, []);
