@@ -4,6 +4,7 @@ import { SignOut, CaretDown } from "@phosphor-icons/react";
 import { useAuth } from "../context/AuthContext";
 import Avatar from "./Avatar";
 import BackgroundFX from "./BackgroundFX";
+import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.svg";
 
 export default function AppShell({ children }) {
@@ -27,36 +28,39 @@ export default function AppShell({ children }) {
           </Link>
 
           {user && (
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen((o) => !o)}
-                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-[var(--color-surface-2)] transition-colors"
-              >
-                <Avatar name={user.name} id={user.id} size="sm" />
-                <span className="hidden text-sm text-[var(--color-text-soft)] sm:inline">
-                  {user.name}
-                </span>
-                <CaretDown size={12} className="text-[var(--color-text-faint)]" />
-              </button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-[var(--color-surface-2)] transition-colors"
+                >
+                  <Avatar name={user.name} id={user.id} size="sm" />
+                  <span className="hidden text-sm text-[var(--color-text-soft)] sm:inline">
+                    {user.name}
+                  </span>
+                  <CaretDown size={12} className="text-[var(--color-text-faint)]" />
+                </button>
 
-              {menuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 z-20 mt-2 w-48 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 shadow-xl">
-                    <div className="border-b border-[var(--color-border-soft)] px-3.5 py-2">
-                      <p className="truncate text-sm font-medium">{user.name}</p>
-                      <p className="truncate text-xs text-[var(--color-text-faint)]">{user.email}</p>
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                    <div className="absolute right-0 z-20 mt-2 w-48 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] py-1.5 shadow-xl">
+                      <div className="border-b border-[var(--color-border-soft)] px-3.5 py-2">
+                        <p className="truncate text-sm font-medium">{user.name}</p>
+                        <p className="truncate text-xs text-[var(--color-text-faint)]">{user.email}</p>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 px-3.5 py-2 text-sm text-[var(--color-debit-text)] hover:bg-[var(--color-debit-soft)] transition-colors"
+                      >
+                        <SignOut size={15} />
+                        Log out
+                      </button>
                     </div>
-                    <button
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-2 px-3.5 py-2 text-sm text-[var(--color-debit-text)] hover:bg-[var(--color-debit-soft)] transition-colors"
-                    >
-                      <SignOut size={15} />
-                      Log out
-                    </button>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
