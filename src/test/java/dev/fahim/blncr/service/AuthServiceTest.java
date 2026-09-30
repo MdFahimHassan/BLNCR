@@ -6,6 +6,7 @@ import dev.fahim.blncr.dto.RegisterRequest;
 import dev.fahim.blncr.entity.User;
 import dev.fahim.blncr.exception.EmailAlreadyInUseException;
 import dev.fahim.blncr.exception.InvalidCredentialsException;
+import dev.fahim.blncr.exception.InvalidRequestException;
 import dev.fahim.blncr.repository.UserRepository;
 import dev.fahim.blncr.security.JwtService;
 import dev.fahim.blncr.security.UserPrincipal;
@@ -24,7 +25,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -113,5 +118,51 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(new LoginRequest("alice@example.com", "wrong-password")))
                 .isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test
+    @DisplayName("an unknown email still costs a full password comparison (no timing side channel)")
+    void unknownEmailStillComparesPassword() {
+        when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.login(new LoginRequest("ghost@example.com", "whatever")))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verify(passwordEncoder).matches(eq("whatever"), anyString());
+    }
+
+    @Test
+    @DisplayName("rejects a password longer than BCrypt's 72-byte limit even if it is under 72 characters")
+    void rejectsPasswordOverBcryptByteLimit() {
+        // 40 characters, but 80 bytes in UTF-8.
+        RegisterRequest request = new RegisterRequest("Alice", "alice@gmail.com", "\u00e9".repeat(40));
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    @DisplayName("logout revokes the bearer token")
+    void logoutRevokesToken() {
+        authService.logout("Bearer abc.def.ghi");
+
+        verify(jwtService).revoke("abc.def.ghi");
+    }
+
+    @Test
+    @DisplayName("logout without a bearer header does nothing")
+    void logoutWithoutHeaderIsNoop() {
+        authService.logout(null);
+        authService.logout("Basic abc");
+
+        verifyNoInteractions(jwtService);
+    }
+
+    @Test
+    @DisplayName("logout with an invalid/expired token is silent")
+    void logoutWithInvalidTokenIsSilent() {
+        doThrow(new IllegalArgumentException("bad token")).when(jwtService).revoke("bad");
+
+        authService.logout("Bearer bad"); // must not throw
     }
 }

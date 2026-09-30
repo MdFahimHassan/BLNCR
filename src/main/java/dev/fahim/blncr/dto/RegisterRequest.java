@@ -1,19 +1,24 @@
 package dev.fahim.blncr.dto;
 
-import jakarta.validation.constraints.Email;
+import dev.fahim.blncr.validation.ValidEmail;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
 
         @NotBlank(message = "Name is required")
+        @Size(max = 100, message = "Name must be at most 100 characters")
+        @Pattern(regexp = "^[^<>\\p{Cntrl}]*$", message = "Name contains invalid characters")
         String name,
 
         @NotBlank(message = "Email is required")
-        @Email(message = "Email must be valid")
+        @ValidEmail(message = "Enter a valid email address")
         String email,
 
+        // BCrypt only uses the first 72 bytes of a password, so anything longer adds no security
+        // and just burns CPU. AuthService additionally enforces the 72-BYTE limit (multi-byte chars).
         @NotBlank(message = "Password is required")
-        @Size(min = 8, message = "Password must be at least 8 characters")
+        @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
         String password
 ) {}

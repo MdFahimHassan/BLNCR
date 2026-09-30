@@ -5,6 +5,7 @@ import dev.fahim.blncr.dto.SettlementResponse;
 import dev.fahim.blncr.entity.Group;
 import dev.fahim.blncr.entity.Settlement;
 import dev.fahim.blncr.entity.User;
+import dev.fahim.blncr.exception.ForbiddenActionException;
 import dev.fahim.blncr.exception.InvalidRequestException;
 import dev.fahim.blncr.exception.NotGroupMemberException;
 import dev.fahim.blncr.exception.ResourceNotFoundException;
@@ -33,6 +34,13 @@ public class SettlementService {
 
         if (request.fromUserId().equals(request.toUserId())) {
             throw new InvalidRequestException("A settlement must be between two different users");
+        }
+
+        // Authorization, not just authentication: being in the group is not enough. Without this
+        // rule any member could record "Bob paid Alice" between two OTHER people and silently
+        // wipe out a debt that was never paid. You may only record a payment you're a party to.
+        if (!requesterId.equals(request.fromUserId()) && !requesterId.equals(request.toUserId())) {
+            throw new ForbiddenActionException("You can only record settlements that you are a part of");
         }
 
         User from = userRepository.findById(request.fromUserId())

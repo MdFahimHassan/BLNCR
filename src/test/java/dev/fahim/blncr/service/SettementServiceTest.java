@@ -5,6 +5,7 @@ import dev.fahim.blncr.dto.SettlementResponse;
 import dev.fahim.blncr.entity.Group;
 import dev.fahim.blncr.entity.Settlement;
 import dev.fahim.blncr.entity.User;
+import dev.fahim.blncr.exception.ForbiddenActionException;
 import dev.fahim.blncr.exception.InvalidRequestException;
 import dev.fahim.blncr.exception.NotGroupMemberException;
 import dev.fahim.blncr.exception.ResourceNotFoundException;
@@ -111,5 +112,17 @@ class SettlementServiceTest {
 
         assertThatThrownBy(() -> settlementService.recordSettlement(GROUP_ID, REQUESTER_ID, request))
                 .isInstanceOf(NotGroupMemberException.class);
+    }
+
+    @Test
+    @DisplayName("rejects a settlement between two OTHER people (requester is neither payer nor payee)")
+    void rejectsSettlementRequesterIsNotPartyTo() {
+        when(groupAccessService.getGroupOrThrow(GROUP_ID)).thenReturn(group);
+
+        // Requester is Alice (100); the settlement is Bob (200) -> Carol (300).
+        CreateSettlementRequest request = new CreateSettlementRequest(200L, 300L, new BigDecimal("10.00"));
+
+        assertThatThrownBy(() -> settlementService.recordSettlement(GROUP_ID, REQUESTER_ID, request))
+                .isInstanceOf(ForbiddenActionException.class);
     }
 }

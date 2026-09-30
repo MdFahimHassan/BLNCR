@@ -168,7 +168,7 @@ class GroupExpenseFlowIntegrationTest {
     @Test
     @DisplayName("registering the same email twice is rejected with 409")
     void rejectsDuplicateRegistration() throws Exception {
-        String email = "duplicate@example.com";
+        String email = "duplicate@gmail.com";
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(

@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# The workflow only needs to read the repo. Without this, GITHUB_TOKEN gets broader default rights.
+permissions:
+  contents: read
+
 jobs:
   backend:
     name: Backend (build + test)
@@ -55,6 +59,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Audit production dependencies for known vulnerabilities
+        # Fails the build on any HIGH/CRITICAL advisory in packages that ship to users.
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Build
         # A placeholder API URL is enough — this only verifies the production

@@ -60,6 +60,8 @@ export default function BalancesTab({ data, currentUserId, onOpenSettle }) {
                 <span className="ledger-figure ml-auto text-sm font-medium text-[var(--color-text)]">
                   {formatMoney(s.amount)}
                 </span>
+                {/* The server only accepts settlements you're a party to, so hide the button otherwise. */}
+                {(s.fromUserId === currentUserId || s.toUserId === currentUserId) && (
                 <Button
                   size="sm"
                   variant="secondary"
@@ -74,6 +76,7 @@ export default function BalancesTab({ data, currentUserId, onOpenSettle }) {
                 >
                   Settle
                 </Button>
+                )}
               </div>
             ))}
           </div>

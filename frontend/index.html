@@ -6,23 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0a0b0d" />
 
-    <!-- Sets the light/dark class before first paint, so there's never a
-         flash of the wrong theme while React boots. Mirrors the same
-         stored-preference-then-system-preference logic ThemeContext uses
-         after mount. -->
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem("blncr_theme");
-          var wantsLight =
-            stored === "light" ||
-            (!stored &&
-              window.matchMedia &&
-              window.matchMedia("(prefers-color-scheme: light)").matches);
-          if (wantsLight) document.documentElement.classList.add("light");
-        } catch (e) {}
-      })();
-    </script>
+    <!-- Sets the light/dark class before first paint (no flash of the wrong theme).
+         Lives in a same-origin file, not inline, so the CSP can ban inline scripts. -->
+    <script src="/theme-init.js"></script>
 
     <title>BLNCR: Split expenses, simply</title>
     <meta

@@ -70,7 +70,7 @@ src/main/java/dev/fahim/blncr/
 ### Local Environment Setup
 - **Postgres:** running in Docker, container name `blncr-db`
   ```
-  docker run --name blncr-db -e POSTGRES_PASSWORD=blncr123 -e POSTGRES_DB=blncr -p 5432:5432 -d postgres
+  docker run --name blncr-db -e POSTGRES_PASSWORD=yourpassword -e POSTGRES_DB=blncr -p 5432:5432 -d postgres
   ```
 - **`application.properties`** (working config):
   ```properties

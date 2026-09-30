@@ -34,11 +34,22 @@ build/
 
 ### Docker / secrets (Phase 6) ###
 # Real env files with secrets are never committed — only the .env.example templates are.
+# (This used to re-include frontend/.env, which meant that file was tracked. Removed: every
+# .env, at any depth, is now ignored. Copy frontend/.env.example to frontend/.env locally.)
 .env
 .env.*
 !.env.example
-!frontend/.env
 !frontend/.env.example
+
+# Private keys / certificates / keystores / credential dumps
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+credentials.json
 
 ### Frontend ###
 frontend/node_modules/

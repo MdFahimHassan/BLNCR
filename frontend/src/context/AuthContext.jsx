@@ -5,8 +5,15 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("blncr_user");
-    return raw ? JSON.parse(raw) : null;
+    // localStorage can be edited by the user or corrupted; never let bad JSON crash the app.
+    try {
+      const raw = localStorage.getItem("blncr_user");
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      localStorage.removeItem("blncr_user");
+      return null;
+    }
   });
   useEffect(() => {
     if (user) {
@@ -40,6 +47,9 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(() => {
+    // Best-effort server-side revocation so the token is dead even if someone copied it.
+    const token = localStorage.getItem("blncr_token");
+    if (token) authApi.logout(token).catch(() => {});
     localStorage.removeItem("blncr_token");
     localStorage.removeItem("blncr_user");
     setUser(null);

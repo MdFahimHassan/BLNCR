@@ -8,8 +8,7 @@ import Button from "../components/Button";
 import BackgroundFX from "../components/BackgroundFX";
 import Reveal from "../components/Reveal";
 import logo from "../assets/logo.svg";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { isValidEmail } from "../lib/validation";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -21,11 +20,11 @@ export default function RegisterPage() {
   const [agreedTouched, setAgreedTouched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const emailValid = EMAIL_RE.test(form.email);
+  const emailValid = isValidEmail(form.email);
   const passwordValid = form.password.length >= 8;
 
   const emailError = touched.email && form.email.length > 0 && !emailValid
-    ? "Enter a valid email address"
+    ? "Enter a real email address (e.g. name@gmail.com)"
     : undefined;
 
   const markTouched = (field) => setTouched((t) => ({ ...t, [field]: true }));
@@ -37,7 +36,7 @@ export default function RegisterPage() {
     if (!emailValid || !passwordValid || !agreed) return;
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password);
+      await register(form.name.trim(), form.email.trim(), form.password);
       navigate("/dashboard");
     } catch (err) {
       toast.error(err.message);
@@ -72,6 +71,7 @@ export default function RegisterPage() {
               id="name"
               required
               autoComplete="name"
+              maxLength={100}
               placeholder="Jane Rahman"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -83,7 +83,8 @@ export default function RegisterPage() {
               type="email"
               required
               autoComplete="email"
-              placeholder="you@example.com"
+              maxLength={254}
+              placeholder="you@gmail.com"
               value={form.email}
               error={emailError}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -103,6 +104,7 @@ export default function RegisterPage() {
               id="password"
               required
               minLength={8}
+              maxLength={72}
               autoComplete="new-password"
               placeholder="••••••••"
               value={form.password}
