@@ -1,7 +1,7 @@
 # --- Stage 1: build -----------------------------------------------------
 # Uses the Maven wrapper against a JDK image so the build doesn't depend on
 # Maven being installed on the host — only Docker is required.
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
 # Copy wrapper + pom first so dependency resolution is cached in its own
@@ -16,7 +16,7 @@ RUN ./mvnw -B clean package -DskipTests
 # --- Stage 2: run ---------------------------------------------------------
 # JRE-only (no JDK/Maven) runtime image, so the final image is a fraction of
 # the build image's size.
-FROM eclipse-temurin:21-jre AS run
+FROM eclipse-temurin:25-jre AS run
 WORKDIR /app
 
 # Run as a non-root user rather than the default root.
