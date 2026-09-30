@@ -143,6 +143,21 @@ class GroupExpenseFlowIntegrationTest {
     }
 
     @Test
+    @DisplayName("selected group currency survives creation and group-list reload")
+    void selectedCurrencySurvivesGroupReload() throws Exception {
+        mockMvc.perform(post("/api/groups")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateGroupRequest("Rangamati", "BDT"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.currency").value("BDT"));
+
+        mockMvc.perform(get("/api/groups").header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].currency").value("BDT"));
+    }
+
+    @Test
     @DisplayName("a request with no Authorization header is rejected")
     void rejectsUnauthenticatedRequest() throws Exception {
         mockMvc.perform(get("/api/groups"))

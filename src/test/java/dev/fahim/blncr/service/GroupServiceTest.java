@@ -71,6 +71,18 @@ class GroupServiceTest {
     }
 
     @Test
+    @DisplayName("creating a group preserves its selected currency")
+    void preservesSelectedCurrency() {
+        when(userRepository.findById(alice.getId())).thenReturn(Optional.of(alice));
+        when(groupRepository.save(any(Group.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(groupMemberRepository.save(any(GroupMember.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        GroupResponse response = groupService.createGroup(alice.getId(), new CreateGroupRequest("Rangamati", "BDT"));
+
+        assertThat(response.currency()).isEqualTo("BDT");
+    }
+
+    @Test
     @DisplayName("adding a member by email works when that email exists")
     void addsExistingUserByEmail() {
         Group group = Group.builder().id(1L).name("Trip").createdBy(alice).build();
