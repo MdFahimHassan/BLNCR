@@ -1,21 +1,43 @@
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+import { currencyInfo, DEFAULT_CURRENCY } from "./currencies";
 
-/** Formats a BigDecimal-as-string/number into "$12.50". Always positive-signed display. */
-export function formatMoney(value) {
-  const n = Number(value ?? 0);
-  return currencyFormatter.format(Math.abs(n));
+// Building an Intl.NumberFormat is relatively expensive, so keep one per currency.
+const formatters = new Map();
+
+function getFormatter(currency) {
+  const code = currencyInfo(currency).code;
+  if (!formatters.has(code)) {
+    formatters.set(
+      code,
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: code,
+        currencyDisplay: currencyInfo(code).narrow ? "narrowSymbol" : "symbol",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
+  }
+  return formatters.get(code);
 }
 
-/** Formats a signed balance with an explicit +/- prefix, e.g. "+$12.50" / "-$4.00". */
-export function formatSignedMoney(value) {
+/** Just the symbol for a currency, e.g. "৳" or "$" — used as the prefix inside amount inputs. */
+export function currencySymbol(currency = DEFAULT_CURRENCY) {
+  return getFormatter(currency)
+    .formatToParts(0)
+    .find((p) => p.type === "currency")?.value;
+}
+
+/** Formats a BigDecimal-as-string/number into "$12.50" / "৳12.50". Always positive-signed display. */
+export function formatMoney(value, currency = DEFAULT_CURRENCY) {
+  const n = Number(value ?? 0);
+  return getFormatter(currency).format(Math.abs(n));
+}
+
+/** Formats a signed balance with an explicit +/- prefix, e.g. "+$12.50" / "-৳4.00". */
+export function formatSignedMoney(value, currency = DEFAULT_CURRENCY) {
   const n = Number(value ?? 0);
   const sign = n > 0 ? "+" : n < 0 ? "-" : "";
-  return `${sign}${currencyFormatter.format(Math.abs(n))}`;
+  return `${sign}${getFormatter(currency).format(Math.abs(n))}`;
 }
 
 export function formatDate(value) {

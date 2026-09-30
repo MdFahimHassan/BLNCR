@@ -12,7 +12,8 @@ public record GroupResponse(
         Long createdByUserId,
         String createdByName,
         LocalDateTime createdAt,
-        int memberCount
+        int memberCount,
+        String currency
 ) {
     public static GroupResponse from(Group group, int memberCount) {
         return GroupResponse.builder()
@@ -22,6 +23,7 @@ public record GroupResponse(
                 .createdByName(group.getCreatedBy().getName())
                 .createdAt(group.getCreatedAt())
                 .memberCount(memberCount)
+                .currency(group.getCurrency())
                 .build();
     }
 }

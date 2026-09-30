@@ -4,8 +4,9 @@ import Field, { Input, Select } from "./Field";
 import Button from "./Button";
 import { useToast } from "../context/ToastContext";
 import { settlementApi } from "../api/endpoints";
+import { currencySymbol } from "../lib/format";
 
-export default function SettleUpModal({ open, onClose, groupId, members, prefill, onCreated }) {
+export default function SettleUpModal({ open, onClose, groupId, members, currency, prefill, onCreated }) {
   const toast = useToast();
   const [fromUserId, setFromUserId] = useState("");
   const [toUserId, setToUserId] = useState("");
@@ -75,7 +76,7 @@ export default function SettleUpModal({ open, onClose, groupId, members, prefill
         <Field label="Amount" htmlFor="settle-amount">
           <div className="relative">
             <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-faint)]">
-              $
+              {currencySymbol(currency)}
             </span>
             <Input
               id="settle-amount"

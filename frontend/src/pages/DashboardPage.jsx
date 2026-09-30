@@ -84,9 +84,20 @@ function Overview({ groups, byGroup }) {
   const settled = groups.filter((g) => byGroup[g.id]);
   if (settled.length < groups.length) return "Track shared expenses and settle up";
 
-  const net = settled.reduce((sum, g) => sum + (byGroup[g.id].net ?? 0), 0);
-  if (Math.abs(net) < 0.005) return "You're all settled up across every group";
-  return net > 0
-    ? `You're owed ${formatMoney(net)} across your groups`
-    : `You owe ${formatMoney(net)} across your groups`;
+  // Groups can use different currencies, and adding ৳ to $ would be meaningless,
+  // so totals are kept per currency and listed side by side.
+  const totals = {};
+  for (const g of settled) {
+    const cur = g.currency ?? "USD";
+    totals[cur] = (totals[cur] ?? 0) + (byGroup[g.id].net ?? 0);
+  }
+  const open = Object.entries(totals).filter(([, n]) => Math.abs(n) >= 0.005);
+  if (open.length === 0) return "You're all settled up across every group";
+
+  const owed = open.filter(([, n]) => n > 0).map(([cur, n]) => formatMoney(n, cur));
+  const owe = open.filter(([, n]) => n < 0).map(([cur, n]) => formatMoney(n, cur));
+  const parts = [];
+  if (owed.length) parts.push(`You're owed ${owed.join(" + ")}`);
+  if (owe.length) parts.push(`${owed.length ? "you owe" : "You owe"} ${owe.join(" + ")}`);
+  return `${parts.join(" and ")} across your groups`;
 }

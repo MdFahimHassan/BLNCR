@@ -3,7 +3,7 @@ import { formatMoney, formatDateTime } from "../lib/format";
 import Avatar from "./Avatar";
 import { EmptyState } from "./Feedback";
 
-export default function ActivityFeed({ items, currentUserId }) {
+export default function ActivityFeed({ items, currentUserId, currency }) {
   if (items.length === 0) {
     return (
       <EmptyState
@@ -51,7 +51,7 @@ export default function ActivityFeed({ items, currentUserId }) {
               item.type === "SETTLEMENT" ? "text-[var(--color-credit-text)]" : "text-[var(--color-text)]"
             }`}
           >
-            {formatMoney(item.amount)}
+            {formatMoney(item.amount, currency)}
           </span>
         </div>
       ))}

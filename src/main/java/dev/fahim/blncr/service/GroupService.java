@@ -6,11 +6,13 @@ import dev.fahim.blncr.dto.GroupResponse;
 import dev.fahim.blncr.entity.Group;
 import dev.fahim.blncr.entity.GroupMember;
 import dev.fahim.blncr.entity.User;
+import dev.fahim.blncr.exception.InvalidRequestException;
 import dev.fahim.blncr.exception.NotGroupMemberException;
 import dev.fahim.blncr.exception.ResourceNotFoundException;
 import dev.fahim.blncr.repository.GroupMemberRepository;
 import dev.fahim.blncr.repository.GroupRepository;
 import dev.fahim.blncr.repository.UserRepository;
+import dev.fahim.blncr.validation.SupportedCurrencies;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,10 +33,16 @@ public class GroupService {
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        String currency = SupportedCurrencies.normalize(request.currency());
+        if (!SupportedCurrencies.isSupported(currency)) {
+            throw new InvalidRequestException("Unsupported currency: " + request.currency());
+        }
+
         Group group = Group.builder()
                 .name(request.name().trim())
                 .createdBy(creator)
                 .createdAt(LocalDateTime.now())
+                .currency(currency)
                 .build();
         Group saved = groupRepository.save(group);
 

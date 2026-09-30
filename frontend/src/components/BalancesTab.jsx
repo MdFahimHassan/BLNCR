@@ -5,7 +5,7 @@ import Avatar from "./Avatar";
 import { EmptyState } from "./Feedback";
 import { formatMoney } from "../lib/format";
 
-export default function BalancesTab({ data, currentUserId, onOpenSettle }) {
+export default function BalancesTab({ data, currentUserId, currency, onOpenSettle }) {
   const { balances, suggestedSettlements } = data;
   const maxAbs = Math.max(1, ...balances.map((b) => Math.abs(Number(b.netBalance))));
   const allSettled = balances.every((b) => Math.abs(Number(b.netBalance)) < 0.005);
@@ -26,6 +26,7 @@ export default function BalancesTab({ data, currentUserId, onOpenSettle }) {
               isYou={b.userId === currentUserId}
               value={b.netBalance}
               maxAbs={maxAbs}
+              currency={currency}
             />
           ))}
         </div>
@@ -58,7 +59,7 @@ export default function BalancesTab({ data, currentUserId, onOpenSettle }) {
                   {s.toUserId === currentUserId ? "you" : s.toName}
                 </span>
                 <span className="ledger-figure ml-auto text-sm font-medium text-[var(--color-text)]">
-                  {formatMoney(s.amount)}
+                  {formatMoney(s.amount, currency)}
                 </span>
                 {/* The server only accepts settlements you're a party to, so hide the button otherwise. */}
                 {(s.fromUserId === currentUserId || s.toUserId === currentUserId) && (

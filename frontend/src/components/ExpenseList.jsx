@@ -5,7 +5,7 @@ import { EmptyState } from "./Feedback";
 
 const SPLIT_LABEL = { EQUAL: "Equal", EXACT: "Exact", PERCENTAGE: "Percent" };
 
-export default function ExpenseList({ expenses, currentUserId }) {
+export default function ExpenseList({ expenses, currentUserId, currency }) {
   if (expenses.length === 0) {
     return (
       <EmptyState
@@ -39,11 +39,11 @@ export default function ExpenseList({ expenses, currentUserId }) {
 
             <div className="text-right">
               <p className="ledger-figure text-sm font-medium text-[var(--color-text)]">
-                {formatMoney(exp.amount)}
+                {formatMoney(exp.amount, currency)}
               </p>
               {yourSplit && (
                 <p className="ledger-figure text-xs text-[var(--color-text-faint)]">
-                  your share {formatMoney(yourSplit.amountOwed)}
+                  your share {formatMoney(yourSplit.amountOwed, currency)}
                 </p>
               )}
             </div>

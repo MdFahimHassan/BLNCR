@@ -26,13 +26,13 @@ export default function GroupCard({ group, balance }) {
           <UsersThree size={14} />
           {group.memberCount} {group.memberCount === 1 ? "member" : "members"}
         </div>
-        <GroupBalance balance={balance} />
+        <GroupBalance balance={balance} currency={group.currency} />
       </div>
     </Link>
   );
 }
 
-function GroupBalance({ balance }) {
+function GroupBalance({ balance, currency }) {
   // Still loading, or the balances call for this one group failed — either
   // way there's nothing honest to show, so stay quiet rather than guess.
   // A skeleton (not a spinner) because this card already rendered with real
@@ -59,7 +59,7 @@ function GroupBalance({ balance }) {
           isCredit ? "text-[var(--color-credit-text)]" : "text-[var(--color-debit-text)]"
         }`}
       >
-        {formatSignedMoney(balance.net)}
+        {formatSignedMoney(balance.net, currency)}
       </p>
       <p className="text-[10px] text-[var(--color-text-faint)]">
         {isCredit ? "you're owed" : "you owe"}

@@ -83,6 +83,8 @@ export default function GroupPage() {
     setSettleModalOpen(true);
   };
 
+  const currency = group?.currency ?? "USD";
+
   if (!members || !expenses || !balances || !activity) {
     return <PageSpinner label="Loading group" />;
   }
@@ -98,7 +100,12 @@ export default function GroupPage() {
           All groups
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">{group?.name ?? "Group"}</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-semibold tracking-tight">{group?.name ?? "Group"}</h1>
+            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-text-soft)]">
+              {currency}
+            </span>
+          </div>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => setSettleModalOpen(true)}>
               Settle up
@@ -127,11 +134,16 @@ export default function GroupPage() {
         ))}
       </div>
 
-      {tab === "expenses" && <ExpenseList expenses={expenses} currentUserId={user.id} />}
+      {tab === "expenses" && <ExpenseList expenses={expenses} currentUserId={user.id} currency={currency} />}
       {tab === "balances" && (
-        <BalancesTab data={balances} currentUserId={user.id} onOpenSettle={openSettleWithPrefill} />
+        <BalancesTab
+          data={balances}
+          currentUserId={user.id}
+          currency={currency}
+          onOpenSettle={openSettleWithPrefill}
+        />
       )}
-      {tab === "activity" && <ActivityFeed items={activity} currentUserId={user.id} />}
+      {tab === "activity" && <ActivityFeed items={activity} currentUserId={user.id} currency={currency} />}
       {tab === "members" && (
         <MembersTab
           members={members}
@@ -146,6 +158,7 @@ export default function GroupPage() {
         groupId={groupId}
         members={members}
         currentUserId={user.id}
+        currency={currency}
         onCreated={refreshMoneyData}
       />
       <AddMemberModal
@@ -162,6 +175,7 @@ export default function GroupPage() {
         }}
         groupId={groupId}
         members={members}
+        currency={currency}
         prefill={settlePrefill}
         onCreated={refreshMoneyData}
       />

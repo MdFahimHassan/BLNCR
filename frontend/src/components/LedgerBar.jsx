@@ -7,7 +7,7 @@ import Avatar from "./Avatar";
  * rose) when they owe. Bar length is proportional to the largest |balance| in the
  * group so the whole ledger reads at a glance, trading-tape style.
  */
-export default function LedgerBar({ name, id, isYou, value, maxAbs }) {
+export default function LedgerBar({ name, id, isYou, value, maxAbs, currency }) {
   const n = Number(value);
   const pct = maxAbs > 0 ? Math.min(100, (Math.abs(n) / maxAbs) * 100) : 0;
   const isCredit = n > 0.005;
@@ -41,7 +41,7 @@ export default function LedgerBar({ name, id, isYou, value, maxAbs }) {
       </div>
 
       <span
-        className={`ledger-figure w-20 shrink-0 text-right text-sm font-medium ${
+        className={`ledger-figure w-24 shrink-0 text-right text-sm font-medium ${
           isCredit
             ? "text-[var(--color-credit-text)]"
             : isDebit
@@ -49,7 +49,7 @@ export default function LedgerBar({ name, id, isYou, value, maxAbs }) {
             : "text-[var(--color-text-faint)]"
         }`}
       >
-        {formatSignedMoney(n)}
+        {formatSignedMoney(n, currency)}
       </span>
     </div>
   );

@@ -19,4 +19,8 @@ public class Group {
     private User createdBy;
 
     private LocalDateTime createdAt;
+
+    @Builder.Default
+    @Column(nullable = false, length = 3)
+    private String currency = "USD";
 }

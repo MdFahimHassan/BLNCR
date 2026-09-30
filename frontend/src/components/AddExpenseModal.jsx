@@ -5,6 +5,7 @@ import Button from "./Button";
 import Avatar from "./Avatar";
 import { useToast } from "../context/ToastContext";
 import { expenseApi } from "../api/endpoints";
+import { currencySymbol } from "../lib/format";
 
 const SPLIT_TYPES = [
   { value: "EQUAL", label: "Equal" },
@@ -12,7 +13,8 @@ const SPLIT_TYPES = [
   { value: "PERCENTAGE", label: "Percent" },
 ];
 
-export default function AddExpenseModal({ open, onClose, groupId, members, currentUserId, onCreated }) {
+export default function AddExpenseModal({ open, onClose, groupId, members, currentUserId, currency, onCreated }) {
+  const symbol = currencySymbol(currency);
   const toast = useToast();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -137,7 +139,7 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
           <Field label="Amount" htmlFor="amount">
             <div className="relative">
               <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-faint)]">
-                $
+                {symbol}
               </span>
               <Input
                 id="amount"
@@ -146,7 +148,7 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
                 min="0.01"
                 step="0.01"
                 placeholder="0.00"
-                className="pl-7 ledger-figure"
+                className="pl-9 ledger-figure"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
@@ -228,7 +230,7 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
                     <div className="relative w-24">
                       {splitType === "EXACT" && (
                         <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-faint)]">
-                          $
+                          {symbol}
                         </span>
                       )}
                       <input
@@ -263,7 +265,7 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
                   : "text-[var(--color-debit-text)]"
               }`}
             >
-              ${exactTotal.toFixed(2)} of ${Number(amount || 0).toFixed(2)} assigned
+              {symbol}{exactTotal.toFixed(2)} of {symbol}{Number(amount || 0).toFixed(2)} assigned
             </p>
           )}
           {splitType === "PERCENTAGE" && (
