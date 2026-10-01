@@ -65,15 +65,15 @@ class ExpenseRepositoryTest {
         assertThat(expenses).extracting(expense -> expense.getDescription()).containsExactly("Dinner", "Groceries");
     }
 
-        @Test
-        @DisplayName("aggregates a user's group net balances including settlements and empty groups")
-        void aggregatesDashboardNetBalances() {
+    @Test
+    @DisplayName("aggregates a user's group net balances including settlements and empty groups")
+    void aggregatesDashboardNetBalances() {
         User bob = entityManager.persist(User.builder().name("Bob").email("bob@example.com")
-            .passwordHash("h").createdAt(Instant.now()).build());
+                .passwordHash("h").createdAt(Instant.now()).build());
         Group summaryGroup = entityManager.persist(Group.builder().name("Summary")
-            .createdBy(alice).createdAt(Instant.now()).build());
+                .createdBy(alice).createdAt(Instant.now()).build());
         Group emptyGroup = entityManager.persist(Group.builder().name("Empty")
-            .createdBy(alice).createdAt(Instant.now()).build());
+                .createdBy(alice).createdAt(Instant.now()).build());
         entityManager.persist(GroupMember.builder().group(summaryGroup).user(alice).joinedAt(Instant.now()).build());
         entityManager.persist(GroupMember.builder().group(summaryGroup).user(bob).joinedAt(Instant.now()).build());
         entityManager.persist(GroupMember.builder().group(emptyGroup).user(alice).joinedAt(Instant.now()).build());
@@ -81,23 +81,23 @@ class ExpenseRepositoryTest {
         Expense expense = entityManager.persist(newExpense(summaryGroup, "Dinner", Instant.now()));
         expense.setAmount(new BigDecimal("60.00"));
         entityManager.persist(ExpenseSplit.builder().expense(expense).user(alice)
-            .amountOwed(new BigDecimal("20.00")).build());
+                .amountOwed(new BigDecimal("20.00")).build());
         entityManager.persist(ExpenseSplit.builder().expense(expense).user(bob)
-            .amountOwed(new BigDecimal("20.00")).build());
+                .amountOwed(new BigDecimal("20.00")).build());
         entityManager.persist(Settlement.builder().group(summaryGroup).fromUser(bob).toUser(alice)
-            .amount(new BigDecimal("10.00")).settledAt(Instant.now()).build());
+                .amount(new BigDecimal("10.00")).settledAt(Instant.now()).build());
         entityManager.flush();
 
         List<GroupNetBalance> balances = expenseRepository.findNetBalancesForUser(alice.getId());
 
         assertThat(balances).extracting(GroupNetBalance::getGroupId)
-            .containsExactlyInAnyOrder(summaryGroup.getId(), emptyGroup.getId());
+                .containsExactlyInAnyOrder(summaryGroup.getId(), emptyGroup.getId());
         BigDecimal summaryBalance = balances.stream()
-            .filter(balance -> balance.getGroupId().equals(summaryGroup.getId()))
-            .findFirst().orElseThrow().getNetBalance();
+                .filter(balance -> balance.getGroupId().equals(summaryGroup.getId()))
+                .findFirst().orElseThrow().getNetBalance();
         BigDecimal emptyGroupBalance = balances.stream()
-            .filter(balance -> balance.getGroupId().equals(emptyGroup.getId()))
-            .findFirst().orElseThrow().getNetBalance();
+                .filter(balance -> balance.getGroupId().equals(emptyGroup.getId()))
+                .findFirst().orElseThrow().getNetBalance();
         assertThat(summaryBalance).isEqualByComparingTo("30.00");
         assertThat(emptyGroupBalance).isEqualByComparingTo("0.00");
         }

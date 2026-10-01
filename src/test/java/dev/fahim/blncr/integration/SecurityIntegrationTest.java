@@ -140,4 +140,37 @@ class SecurityIntegrationTest {
                 .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                 .andExpect(header().exists("Strict-Transport-Security"));
     }
+
+    @Test
+    @DisplayName("liveness and readiness are public while other Actuator endpoints remain protected")
+    void exposesOnlySafeHealthProbes() throws Exception {
+        mockMvc.perform(get("/actuator/health/liveness"))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("X-Request-ID"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.status").value("UP"));
+
+        mockMvc.perform(get("/actuator/health/readiness").header("X-Request-ID", "probe_test-42"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Request-ID", "probe_test-42"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.status").value("UP"));
+
+        mockMvc.perform(get("/actuator/env"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("OpenAPI docs are public and Swagger UI receives a constrained asset policy")
+    void exposesOpenApiDocumentation() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .jsonPath("$.openapi").exists());
+
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Security-Policy",
+                        org.hamcrest.Matchers.containsString("script-src 'self' 'unsafe-inline'")));
+    }
 }

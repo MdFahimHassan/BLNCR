@@ -93,8 +93,17 @@ public class SecurityConfig {
                         // This is a pure JSON API: it never serves HTML, scripts, or frames, so the
                         // strictest possible CSP costs nothing and blocks any injected content outright.
                         .addHeaderWriter((request, response) -> {
+                            String contextPath = request.getContextPath();
+                            String requestPath = request.getRequestURI().substring(contextPath.length());
+                            boolean swaggerUi = requestPath.equals("/swagger-ui.html")
+                                    || requestPath.startsWith("/swagger-ui/");
                             response.setHeader("Content-Security-Policy",
-                                    "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+                                    swaggerUi
+                                            ? "default-src 'none'; script-src 'self' 'unsafe-inline'; "
+                                                + "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                                                + "font-src 'self' data:; connect-src 'self'; "
+                                                + "frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+                                            : "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
                             response.setHeader("Referrer-Policy", "no-referrer");
                             response.setHeader("Permissions-Policy",
                                     "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
@@ -105,6 +114,8 @@ public class SecurityConfig {
                     .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                    .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

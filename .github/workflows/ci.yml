@@ -42,7 +42,7 @@ jobs:
         run: docker build -t blncr-backend:ci .
 
   frontend:
-    name: Frontend (build)
+    name: Frontend (lint + test + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -63,6 +63,19 @@ jobs:
       - name: Audit production dependencies for known vulnerabilities
         # Fails the build on any HIGH/CRITICAL advisory in packages that ship to users.
         run: npm audit --omit=dev --audit-level=high
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          if-no-files-found: error
 
       - name: Build
         # A placeholder API URL is enough — this only verifies the production

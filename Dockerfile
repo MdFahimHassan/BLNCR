@@ -27,6 +27,9 @@ COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 9090
 
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+	CMD curl --fail --silent http://localhost:9090/actuator/health/readiness > /dev/null || exit 1
+
 # JWT_SECRET, DB_HOST, DB_PASSWORD, etc. are supplied at `docker run`/compose
 # time (see .env.example) — nothing secret is baked into the image.
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

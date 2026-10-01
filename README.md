@@ -1,6 +1,6 @@
 # BLNCR
 
-**Split group expenses fairly. Settle up with the fewest possible payments.**
+**Split group expenses fairly. Get a compact plan to settle up.**
 
 [![CI](https://github.com/MdFahimHassan/BLNCR/actions/workflows/ci.yml/badge.svg)](https://github.com/MdFahimHassan/BLNCR/actions/workflows/ci.yml)
 [![Java 21](https://img.shields.io/badge/Java-21-b07219?logo=openjdk&logoColor=white)](#tech-stack)
@@ -33,9 +33,10 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 - **Group expense tracking** — create groups, add members, log shared expenses
 - **Flexible splitting** — equal, exact-amount, or percentage-based splits
 - **Smart balance calculation** — real-time view of who owes whom
-- **Debt simplification engine** — minimizes the total number of settle-up transactions in a group
+- **Debt simplification engine** — uses a greedy heuristic to produce a compact settle-up plan; it does not guarantee the mathematical minimum
 - **Settlement tracking** — mark debts as paid, keep a running activity history
 - **Precise financial math** — every monetary value is a `BigDecimal`, split in integer cents, never a `float`/`double`
+- **Operations-ready API** — liveness/readiness probes, request IDs, structured JSON logs, optional Sentry error tracking, and OpenAPI docs
 
 ## Tech stack
 
@@ -47,6 +48,15 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 | **Frontend** | React 19 · Vite · React Router 7 · Tailwind CSS v4 · Axios |
 | **Testing** | JUnit 5 · Mockito · AssertJ · `@DataJpaTest` / `@WebMvcTest` / `@SpringBootTest` (H2) |
 | **Infra** | Docker (multi-stage build) · Docker Compose · GitHub Actions CI · Railway (API + Postgres) · Vercel (frontend) |
+
+## Operations and security notes
+
+- Docker health is based on `/actuator/health/readiness`; `/actuator/health/liveness` and `/actuator/health/readiness` are the only public Actuator endpoints. Health details are not exposed.
+- Every response includes `X-Request-ID`. Safe caller-provided IDs are retained; invalid or missing values are replaced with a generated UUID. Console logs are structured JSON and include the request ID.
+- Set `SENTRY_DSN` in the deployment secret store to enable error reporting. Sentry is disabled when no DSN is configured and `send-default-pii` is off.
+- The browser stores JWTs in `localStorage`, which is convenient for this standalone SPA but makes script injection a token-theft risk. The API's restrictive CSP and lack of third-party scripts reduce exposure, but do not make browser storage equivalent to an `HttpOnly` cookie.
+- Login throttling and token revocation are in-memory and single-instance only; counters reset on restart and revocations do not synchronize across replicas. Use a shared store (such as Redis) or edge rate limiting before horizontal scaling.
+- API docs are available at `/swagger-ui.html` and `/v3/api-docs`.
 
 ## Architecture
 

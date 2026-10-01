@@ -12,6 +12,8 @@ A Splitwise-style expense splitter with a greedy debt-simplification heuristic t
 **Stack:** Java 21 · Spring Boot · PostgreSQL · React · Tailwind · Docker · GitHub Actions
 **Links:** [Live app](https://blncr-xi.vercel.app/) · [API](https://blncr-production.up.railway.app/) · [Source](https://github.com/MdFahimHassan/BLNCR)
 
+The SPA keeps its bearer JWT in `localStorage`. This is a deliberate trade-off: the restrictive API CSP and absence of third-party scripts reduce script-injection exposure, but a successful XSS could still read browser storage. Login throttling and revocation are in-memory and are therefore single-instance protections, not shared controls for horizontal deployments.
+
 ---
 
 ## Long version (project detail page)
