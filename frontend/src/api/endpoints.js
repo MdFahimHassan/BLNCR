@@ -11,6 +11,15 @@ export const authApi = {
 
 export const userApi = {
   me: () => api.get("/api/users/me").then((r) => r.data),
+  updateProfile: (payload) => api.put("/api/users/me", payload).then((r) => r.data),
+  uploadAvatar: (file) => {
+    const payload = new FormData();
+    payload.append("avatar", file);
+    return api.post("/api/users/me/avatar", payload, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data);
+  },
+  removeAvatar: () => api.delete("/api/users/me/avatar").then((r) => r.data),
 };
 
 export const groupApi = {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { authApi } from "../api/endpoints";
+import { authApi, userApi } from "../api/endpoints";
 
 const AuthContext = createContext(null);
 
@@ -22,6 +22,17 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("blncr_user");
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    let active = true;
+    userApi.me().then((profile) => {
+      if (active) setUser(profile);
+    }).catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
 
   const applyAuth = useCallback((auth) => {
     localStorage.setItem("blncr_token", auth.token);
@@ -46,6 +57,26 @@ export function AuthProvider({ children }) {
     [applyAuth]
   );
 
+  const saveProfile = useCallback(async (payload) => {
+    const auth = await userApi.updateProfile(payload);
+    applyAuth(auth);
+    const profile = await userApi.me();
+    setUser(profile);
+    return profile;
+  }, [applyAuth]);
+
+  const uploadAvatar = useCallback(async (file) => {
+    const profile = await userApi.uploadAvatar(file);
+    setUser(profile);
+    return profile;
+  }, []);
+
+  const removeAvatar = useCallback(async () => {
+    const profile = await userApi.removeAvatar();
+    setUser(profile);
+    return profile;
+  }, []);
+
   const logout = useCallback(() => {
     // Best-effort server-side revocation so the token is dead even if someone copied it.
     const token = localStorage.getItem("blncr_token");
@@ -56,7 +87,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, saveProfile, uploadAvatar, removeAvatar }}>
       {children}
     </AuthContext.Provider>
   );

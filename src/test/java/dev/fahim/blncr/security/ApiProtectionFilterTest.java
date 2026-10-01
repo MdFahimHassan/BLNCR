@@ -60,4 +60,17 @@ class ApiProtectionFilterTest {
         assertThat(send(filter, "POST", "/api/groups", "1.1.1.1", 1001).getStatus()).isEqualTo(413);
         assertThat(send(filter, "POST", "/api/groups", "1.1.1.1", 1000).getStatus()).isEqualTo(200);
     }
+
+    @Test
+    @DisplayName("avatar uploads get a bounded multipart allowance without relaxing other endpoints")
+    void appliesAvatarUploadBodyLimit() throws Exception {
+        ApiProtectionFilter filter = new ApiProtectionFilter(100, 100, 1000);
+
+        assertThat(send(filter, "POST", "/api/users/me/avatar", "1.1.1.1", 700 * 1024).getStatus())
+                .isEqualTo(200);
+        assertThat(send(filter, "POST", "/api/users/me/avatar", "1.1.1.1", 700 * 1024 + 1).getStatus())
+                .isEqualTo(413);
+        assertThat(send(filter, "POST", "/api/users/me", "1.1.1.1", 1001).getStatus())
+                .isEqualTo(413);
+    }
 }

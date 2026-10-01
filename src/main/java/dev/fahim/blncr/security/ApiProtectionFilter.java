@@ -33,6 +33,8 @@ public class ApiProtectionFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_PATH = "/api/auth/login";
     private static final String REGISTER_PATH = "/api/auth/register";
+    private static final String AVATAR_UPLOAD_PATH = "/api/users/me/avatar";
+    private static final long MAX_AVATAR_REQUEST_BYTES = 700 * 1024L;
     private static final long WINDOW_MS = 60_000L;
     private static final int MAX_TRACKED_KEYS = 100_000;
 
@@ -65,7 +67,10 @@ public class ApiProtectionFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        if (request.getContentLengthLong() > maxBodyBytes) {
+        long requestLimit = "POST".equalsIgnoreCase(request.getMethod())
+            && AVATAR_UPLOAD_PATH.equals(pathWithinApp(request))
+            ? MAX_AVATAR_REQUEST_BYTES : maxBodyBytes;
+        if (request.getContentLengthLong() > requestLimit) {
             writeError(response, 413, "Payload Too Large", "Request body is too large", null);
             return;
         }
