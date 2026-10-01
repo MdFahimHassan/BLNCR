@@ -62,29 +62,6 @@ public class GroupService {
         return GroupResponse.from(saved, 1);
     }
 
-    @Transactional
-    public GroupMemberResponse addMember(Long groupId, Long requesterId, String memberEmail) {
-        Group group = getGroupOrThrow(groupId);
-        requireMembership(groupId, requesterId);
-
-        User newMember = userRepository.findByEmail(memberEmail.trim().toLowerCase())
-                .orElseThrow(() -> new ResourceNotFoundException("No user found with email: " + memberEmail));
-
-        if (groupMemberRepository.existsByGroupIdAndUserId(groupId, newMember.getId())) {
-            GroupMember existing = groupMemberRepository.findByGroupIdAndUserId(groupId, newMember.getId()).get();
-            return GroupMemberResponse.from(existing);
-        }
-
-        GroupMember membership = GroupMember.builder()
-                .group(group)
-                .user(newMember)
-                .joinedAt(Instant.now())
-                .build();
-        GroupMember saved = groupMemberRepository.save(membership);
-
-        return GroupMemberResponse.from(saved);
-    }
-
     @Transactional(readOnly = true)
     public List<GroupResponse> listMyGroups(Long userId) {
         List<GroupMember> memberships = groupMemberRepository.findByUserIdAndLeftAtIsNull(userId);
@@ -127,7 +104,7 @@ public class GroupService {
     }
 
     private void requireMembership(Long groupId, Long userId) {
-        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, userId)) {
+        if (!groupMemberRepository.existsByGroupIdAndUserIdAndLeftAtIsNull(groupId, userId)) {
             throw new NotGroupMemberException("You must be a member of this group to perform this action");
         }
     }

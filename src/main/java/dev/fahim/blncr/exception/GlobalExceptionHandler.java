@@ -2,6 +2,7 @@ package dev.fahim.blncr.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -26,6 +27,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleEmailAlreadyInUse(EmailAlreadyInUseException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiError.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage()));
+    }
+
+    // A database constraint (e.g. the unique expense idempotency key) rejected a write, usually
+    // because two identical requests raced. 409 tells the client to refresh/retry; retrying a POST
+    // with the same Idempotency-Key then returns the already-saved expense.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation", ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of(HttpStatus.CONFLICT.value(), "Conflict",
+                        "This conflicts with something that was just saved. Please refresh and try again."));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

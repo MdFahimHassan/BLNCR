@@ -1,7 +1,6 @@
 package dev.fahim.blncr.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.fahim.blncr.dto.AddMemberRequest;
 import dev.fahim.blncr.dto.CreateExpenseRequest;
 import dev.fahim.blncr.entity.ExpenseCategory;
 import dev.fahim.blncr.dto.CreateGroupRequest;

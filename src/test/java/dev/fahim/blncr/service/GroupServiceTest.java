@@ -7,7 +7,6 @@ import dev.fahim.blncr.entity.Group;
 import dev.fahim.blncr.entity.GroupMember;
 import dev.fahim.blncr.entity.User;
 import dev.fahim.blncr.exception.NotGroupMemberException;
-import dev.fahim.blncr.exception.ResourceNotFoundException;
 import dev.fahim.blncr.repository.GroupMemberRepository;
 import dev.fahim.blncr.repository.GroupMemberCount;
 import dev.fahim.blncr.repository.GroupRepository;
@@ -27,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -84,63 +82,42 @@ class GroupServiceTest {
     }
 
     @Test
-    @DisplayName("adding a member by email works when that email exists")
-    void addsExistingUserByEmail() {
+    @DisplayName("an active member can list the group's active members")
+    void activeMemberCanListMembers() {
         Group group = Group.builder().id(1L).name("Trip").createdBy(alice).build();
+        GroupMember aliceMembership = GroupMember.builder().id(1L).group(group).user(alice).build();
 
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, alice.getId())).thenReturn(true);
-        when(userRepository.findByEmail("bob@example.com")).thenReturn(Optional.of(bob));
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, bob.getId())).thenReturn(false);
-        when(groupMemberRepository.save(any(GroupMember.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndLeftAtIsNull(1L, alice.getId())).thenReturn(true);
+        when(groupMemberRepository.findByGroupIdAndLeftAtIsNullOrderByJoinedAtAsc(1L))
+                .thenReturn(List.of(aliceMembership));
 
-        GroupMemberResponse response = groupService.addMember(1L, alice.getId(), "bob@example.com");
+        List<GroupMemberResponse> members = groupService.listMembers(1L, alice.getId());
 
-        assertThat(response.email()).isEqualTo("bob@example.com");
-        verify(groupMemberRepository, times(1)).save(any(GroupMember.class));
+        assertThat(members).hasSize(1);
+        assertThat(members.get(0).userId()).isEqualTo(alice.getId());
     }
 
     @Test
-    @DisplayName("adding a member who is already in the group is idempotent (no duplicate row)")
-    void addingExistingMemberIsIdempotent() {
-        Group group = Group.builder().id(1L).name("Trip").createdBy(alice).build();
-        GroupMember existingMembership = GroupMember.builder().id(5L).group(group).user(bob).build();
-
-        when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, alice.getId())).thenReturn(true);
-        when(userRepository.findByEmail("bob@example.com")).thenReturn(Optional.of(bob));
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, bob.getId())).thenReturn(true);
-        when(groupMemberRepository.findByGroupIdAndUserId(1L, bob.getId())).thenReturn(Optional.of(existingMembership));
-
-        GroupMemberResponse response = groupService.addMember(1L, alice.getId(), "bob@example.com");
-
-        assertThat(response.userId()).isEqualTo(bob.getId());
-        verify(groupMemberRepository, never()).save(any(GroupMember.class));
-    }
-
-    @Test
-    @DisplayName("rejects adding a member when the requester isn't in the group")
-    void rejectsAddMemberByNonMemberRequester() {
+    @DisplayName("a member who has left the group can no longer list its members")
+    void formerMemberCannotListMembers() {
         Group group = Group.builder().id(1L).name("Trip").createdBy(alice).build();
 
         when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, bob.getId())).thenReturn(false);
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndLeftAtIsNull(1L, bob.getId())).thenReturn(false);
 
-        assertThatThrownBy(() -> groupService.addMember(1L, bob.getId(), "someone@example.com"))
+        assertThatThrownBy(() -> groupService.listMembers(1L, bob.getId()))
                 .isInstanceOf(NotGroupMemberException.class);
+        verify(groupMemberRepository, never()).existsByGroupIdAndUserId(any(), any());
     }
 
     @Test
-    @DisplayName("rejects adding a member whose email doesn't correspond to any account")
-    void rejectsUnknownEmail() {
-        Group group = Group.builder().id(1L).name("Trip").createdBy(alice).build();
+    @DisplayName("a member who has left the group can no longer look up another member")
+    void formerMemberCannotGetMember() {
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndLeftAtIsNull(1L, bob.getId())).thenReturn(false);
 
-        when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, alice.getId())).thenReturn(true);
-        when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> groupService.addMember(1L, alice.getId(), "ghost@example.com"))
-                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> groupService.getMember(1L, alice.getId(), bob.getId()))
+                .isInstanceOf(NotGroupMemberException.class);
     }
 
     @Test

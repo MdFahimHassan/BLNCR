@@ -47,9 +47,8 @@ public class GroupManagementService {
 
     @Transactional
     public GroupInvitationResponse createInvitation(Long groupId, Long requesterId) {
-        groupAccessService.getGroupOrThrow(groupId);
-        groupAccessService.requireManager(groupId, requesterId);
         Group group = groupAccessService.getGroupOrThrow(groupId);
+        groupAccessService.requireManager(groupId, requesterId);
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -68,7 +67,7 @@ public class GroupManagementService {
 
     @Transactional
     public AcceptedInvitationResponse acceptInvitation(String token, Long userId) {
-        GroupInvitation invitation = invitationRepository.findByTokenHash(hashToken(token))
+        GroupInvitation invitation = invitationRepository.findByTokenHashForUpdate(hashToken(token))
                 .orElseThrow(this::invalidInvitation);
         Instant now = Instant.now();
         if (invitation.getExpiresAt().isBefore(now)) {
@@ -149,6 +148,8 @@ public class GroupManagementService {
         if (requester.getRole() == GroupRole.ADMIN && target.getRole() != GroupRole.MEMBER) {
             throw new ForbiddenActionException("Admins can only remove regular members");
         }
+        requireSettledUp(groupId, targetUserId,
+                "This member still has an unsettled balance. Settle up before removing them.");
         target.setLeftAt(Instant.now());
         groupMemberRepository.save(target);
     }
@@ -160,6 +161,7 @@ public class GroupManagementService {
         if (membership.getRole() == GroupRole.OWNER) {
             throw new InvalidRequestException("Transfer ownership or delete the group before leaving");
         }
+        requireSettledUp(groupId, userId, "Settle your balance before leaving this group");
         membership.setLeftAt(Instant.now());
         groupMemberRepository.save(membership);
     }
@@ -191,7 +193,11 @@ public class GroupManagementService {
             if (membership.getLeftAt() != null) {
                 continue;
             }
+            Long membershipGroupId = membership.getGroup().getId();
+            String settleMessage = "Settle your balance in \"" + membership.getGroup().getName()
+                    + "\" before deleting your account";
             if (membership.getRole() != GroupRole.OWNER) {
+                requireSettledUp(membershipGroupId, userId, settleMessage);
                 membership.setLeftAt(now);
                 groupMemberRepository.save(membership);
                 continue;
@@ -209,6 +215,7 @@ public class GroupManagementService {
                 continue;
             }
 
+            requireSettledUp(groupId, userId, settleMessage);
             GroupMember successor = successors.get(0);
             successor.setRole(GroupRole.OWNER);
             membership.setRole(GroupRole.ADMIN);
@@ -223,6 +230,21 @@ public class GroupManagementService {
     private GroupMember activeMember(Long groupId, Long userId) {
         return groupMemberRepository.findByGroupIdAndUserIdAndLeftAtIsNull(groupId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Group member not found"));
+    }
+
+    /**
+     * Someone with a non-zero balance must not leave: settlements can only be recorded between
+     * active members, so their debt (or what they're owed) could never be cleared afterwards.
+     * Amounts are exact cents (NUMERIC(19,2)), so an exact zero check is correct here.
+     */
+    private void requireSettledUp(Long groupId, Long userId, String message) {
+        boolean unsettled = expenseRepository.findNetBalancesForUser(userId).stream()
+                .anyMatch(balance -> groupId.equals(balance.getGroupId())
+                        && balance.getNetBalance() != null
+                        && balance.getNetBalance().signum() != 0);
+        if (unsettled) {
+            throw new InvalidRequestException(message);
+        }
     }
 
     private void requireManagerRole(GroupRole role) {
