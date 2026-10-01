@@ -2,7 +2,7 @@ package dev.fahim.blncr.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "users")
@@ -26,5 +26,5 @@ public class User {
     @Column(name = "profile_image_content_type", length = 32)
     private String profileImageContentType;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 }

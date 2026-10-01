@@ -2,7 +2,7 @@ package dev.fahim.blncr.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "groups")
@@ -18,7 +18,7 @@ public class Group {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Builder.Default
     @Column(nullable = false, length = 3)

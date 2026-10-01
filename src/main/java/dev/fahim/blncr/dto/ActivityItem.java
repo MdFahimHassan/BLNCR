@@ -5,7 +5,7 @@ import dev.fahim.blncr.entity.Settlement;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * A single chronological entry in a group's activity feed. {@code type} is either
@@ -24,7 +24,7 @@ public record ActivityItem(
         String primaryUserName,
         Long secondaryUserId,
         String secondaryUserName,
-        LocalDateTime timestamp
+        Instant timestamp
 ) {
     public static ActivityItem fromExpense(Expense expense) {
         return ActivityItem.builder()

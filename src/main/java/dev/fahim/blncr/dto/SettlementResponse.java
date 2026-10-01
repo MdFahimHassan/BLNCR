@@ -4,7 +4,7 @@ import dev.fahim.blncr.entity.Settlement;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 public record SettlementResponse(
@@ -15,7 +15,7 @@ public record SettlementResponse(
         Long toUserId,
         String toName,
         BigDecimal amount,
-        LocalDateTime settledAt
+        Instant settledAt
 ) {
     public static SettlementResponse from(Settlement settlement) {
         return SettlementResponse.builder()

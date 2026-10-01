@@ -4,14 +4,14 @@ import dev.fahim.blncr.entity.User;
 import lombok.Builder;
 
 import java.util.Base64;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 public record UserResponse(
         Long id,
         String name,
         String email,
-        LocalDateTime createdAt,
+        Instant createdAt,
         String avatar
 ) {
     public static UserResponse from(User user) {

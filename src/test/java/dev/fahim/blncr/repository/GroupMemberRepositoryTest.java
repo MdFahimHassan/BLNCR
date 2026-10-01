@@ -11,7 +11,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,11 +31,11 @@ class GroupMemberRepositoryTest {
     @BeforeEach
     void setUp() {
         alice = entityManager.persist(User.builder().name("Alice").email("alice@example.com")
-                .passwordHash("h").createdAt(LocalDateTime.now()).build());
+                .passwordHash("h").createdAt(Instant.now()).build());
         bob = entityManager.persist(User.builder().name("Bob").email("bob@example.com")
-                .passwordHash("h").createdAt(LocalDateTime.now()).build());
-        group = entityManager.persist(Group.builder().name("Trip").createdBy(alice).createdAt(LocalDateTime.now()).build());
-        entityManager.persist(GroupMember.builder().group(group).user(alice).joinedAt(LocalDateTime.now()).build());
+                .passwordHash("h").createdAt(Instant.now()).build());
+        group = entityManager.persist(Group.builder().name("Trip").createdBy(alice).createdAt(Instant.now()).build());
+        entityManager.persist(GroupMember.builder().group(group).user(alice).joinedAt(Instant.now()).build());
     }
 
     @Test
@@ -48,7 +48,7 @@ class GroupMemberRepositoryTest {
     @Test
     @DisplayName("findByGroupId returns every member row for that group")
     void findsAllMembersOfGroup() {
-        entityManager.persist(GroupMember.builder().group(group).user(bob).joinedAt(LocalDateTime.now()).build());
+        entityManager.persist(GroupMember.builder().group(group).user(bob).joinedAt(Instant.now()).build());
 
         assertThat(groupMemberRepository.findByGroupId(group.getId())).hasSize(2);
     }

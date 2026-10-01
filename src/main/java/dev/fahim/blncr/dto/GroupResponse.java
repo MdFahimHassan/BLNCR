@@ -3,7 +3,7 @@ package dev.fahim.blncr.dto;
 import dev.fahim.blncr.entity.Group;
 import lombok.Builder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 public record GroupResponse(
@@ -11,7 +11,7 @@ public record GroupResponse(
         String name,
         Long createdByUserId,
         String createdByName,
-        LocalDateTime createdAt,
+        Instant createdAt,
         int memberCount,
         String currency
 ) {

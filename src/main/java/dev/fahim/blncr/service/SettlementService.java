@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -57,7 +57,7 @@ public class SettlementService {
                 .fromUser(from)
                 .toUser(to)
                 .amount(request.amount().setScale(2, RoundingMode.HALF_UP))
-                .settledAt(LocalDateTime.now())
+                .settledAt(Instant.now())
                 .build();
 
         return SettlementResponse.from(settlementRepository.save(settlement));

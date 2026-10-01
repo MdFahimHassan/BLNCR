@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +57,7 @@ public class AuthService {
                 .name(request.name().trim())
                 .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(request.password()))
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
 
         User saved;

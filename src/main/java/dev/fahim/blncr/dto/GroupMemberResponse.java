@@ -3,14 +3,14 @@ package dev.fahim.blncr.dto;
 import dev.fahim.blncr.entity.GroupMember;
 import lombok.Builder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 public record GroupMemberResponse(
         Long userId,
         String name,
         String email,
-        LocalDateTime joinedAt
+        Instant joinedAt
 ) {
     public static GroupMemberResponse from(GroupMember member) {
         return GroupMemberResponse.builder()

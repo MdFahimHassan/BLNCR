@@ -2,7 +2,7 @@ package dev.fahim.blncr.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "group_members")
@@ -17,5 +17,5 @@ public class GroupMember {
     @ManyToOne @JoinColumn(name = "user_id")
     private User user;
 
-    private LocalDateTime joinedAt;
+    private Instant joinedAt;
 }

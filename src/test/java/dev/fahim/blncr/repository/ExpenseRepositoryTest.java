@@ -13,7 +13,8 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,12 +35,12 @@ class ExpenseRepositoryTest {
     @BeforeEach
     void setUp() {
         alice = entityManager.persist(User.builder().name("Alice").email("alice@example.com")
-                .passwordHash("h").createdAt(LocalDateTime.now()).build());
-        group = entityManager.persist(Group.builder().name("Trip").createdBy(alice).createdAt(LocalDateTime.now()).build());
-        otherGroup = entityManager.persist(Group.builder().name("Rent").createdBy(alice).createdAt(LocalDateTime.now()).build());
+                .passwordHash("h").createdAt(Instant.now()).build());
+        group = entityManager.persist(Group.builder().name("Trip").createdBy(alice).createdAt(Instant.now()).build());
+        otherGroup = entityManager.persist(Group.builder().name("Rent").createdBy(alice).createdAt(Instant.now()).build());
 
-        LocalDateTime now = LocalDateTime.now();
-        entityManager.persist(newExpense(group, "Groceries", now.minusDays(2)));
+        Instant now = Instant.now();
+        entityManager.persist(newExpense(group, "Groceries", now.minus(2, ChronoUnit.DAYS)));
         entityManager.persist(newExpense(group, "Dinner", now));
         entityManager.persist(newExpense(otherGroup, "Rent", now));
     }
@@ -61,7 +62,7 @@ class ExpenseRepositoryTest {
         assertThat(expenses).extracting(expense -> expense.getDescription()).containsExactly("Dinner", "Groceries");
     }
 
-    private Expense newExpense(Group g, String description, LocalDateTime createdAt) {
+    private Expense newExpense(Group g, String description, Instant createdAt) {
         return Expense.builder()
                 .group(g).paidBy(alice).amount(new BigDecimal("10.00"))
                 .description(description).splitType(SplitType.EQUAL).createdAt(createdAt)

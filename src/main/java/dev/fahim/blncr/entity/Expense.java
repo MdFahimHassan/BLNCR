@@ -3,7 +3,7 @@ package dev.fahim.blncr.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "expenses")
@@ -26,5 +26,5 @@ public class Expense {
     @Enumerated(EnumType.STRING)
     private SplitType splitType;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 }

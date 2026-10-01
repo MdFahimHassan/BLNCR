@@ -3,7 +3,7 @@ package dev.fahim.blncr.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "settlements")
@@ -24,5 +24,5 @@ public class Settlement {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    private LocalDateTime settledAt;
+    private Instant settledAt;
 }

@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -41,7 +41,7 @@ public class GroupService {
         Group group = Group.builder()
                 .name(request.name().trim())
                 .createdBy(creator)
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .currency(currency)
                 .build();
         Group saved = groupRepository.save(group);
@@ -50,7 +50,7 @@ public class GroupService {
         GroupMember membership = GroupMember.builder()
                 .group(saved)
                 .user(creator)
-                .joinedAt(LocalDateTime.now())
+                .joinedAt(Instant.now())
                 .build();
         groupMemberRepository.save(membership);
 
@@ -73,7 +73,7 @@ public class GroupService {
         GroupMember membership = GroupMember.builder()
                 .group(group)
                 .user(newMember)
-                .joinedAt(LocalDateTime.now())
+                .joinedAt(Instant.now())
                 .build();
         GroupMember saved = groupMemberRepository.save(membership);
 

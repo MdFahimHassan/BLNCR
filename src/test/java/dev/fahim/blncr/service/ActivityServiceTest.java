@@ -18,7 +18,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,14 +58,14 @@ class ActivityServiceTest {
     @Test
     @DisplayName("merges expenses and settlements into one feed sorted newest first")
     void mergesAndSortsChronologically() {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         Expense oldExpense = Expense.builder().id(1L).paidBy(alice).amount(new BigDecimal("30.00"))
-                .description("Groceries").splitType(SplitType.EQUAL).createdAt(now.minusDays(2)).build();
+                .description("Groceries").splitType(SplitType.EQUAL).createdAt(now.minus(2, ChronoUnit.DAYS)).build();
         Expense newExpense = Expense.builder().id(2L).paidBy(bob).amount(new BigDecimal("10.00"))
                 .description("Coffee").splitType(SplitType.EQUAL).createdAt(now).build();
         Settlement middleSettlement = Settlement.builder().id(1L).fromUser(bob).toUser(alice)
-                .amount(new BigDecimal("15.00")).settledAt(now.minusDays(1)).build();
+                .amount(new BigDecimal("15.00")).settledAt(now.minus(1, ChronoUnit.DAYS)).build();
 
         when(expenseRepository.findByGroupId(GROUP_ID)).thenReturn(List.of(oldExpense, newExpense));
         when(settlementRepository.findByGroupId(GROUP_ID)).thenReturn(List.of(middleSettlement));

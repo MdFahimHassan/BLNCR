@@ -19,7 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,7 +86,7 @@ class AuthServiceTest {
     @DisplayName("logs in successfully with the correct password")
     void logsInSuccessfully() {
         User user = User.builder().id(1L).name("Alice").email("alice@example.com")
-                .passwordHash("hashed-password").createdAt(LocalDateTime.now()).build();
+                .passwordHash("hashed-password").createdAt(Instant.now()).build();
 
         when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed-password")).thenReturn(true);

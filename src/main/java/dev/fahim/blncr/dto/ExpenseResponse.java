@@ -6,7 +6,7 @@ import dev.fahim.blncr.entity.SplitType;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Builder
@@ -18,7 +18,7 @@ public record ExpenseResponse(
         Long paidByUserId,
         String paidByName,
         SplitType splitType,
-        LocalDateTime createdAt,
+        Instant createdAt,
         List<ExpenseSplitResponse> splits
 ) {
     public static ExpenseResponse from(Expense expense, List<ExpenseSplit> splits) {

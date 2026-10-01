@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -116,6 +116,6 @@ class UserServiceTest {
 
     private User user() {
         return User.builder().id(7L).name("Old Name").email("old@example.com")
-                .passwordHash("hashed").createdAt(LocalDateTime.now()).build();
+                .passwordHash("hashed").createdAt(Instant.now()).build();
     }
 }

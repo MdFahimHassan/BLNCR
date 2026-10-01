@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,7 +65,7 @@ class UserRepositoryTest {
                 .name(name)
                 .email(email)
                 .passwordHash("hashed")
-                .createdAt(LocalDateTime.now())
+                .createdAt(Instant.now())
                 .build();
     }
 }

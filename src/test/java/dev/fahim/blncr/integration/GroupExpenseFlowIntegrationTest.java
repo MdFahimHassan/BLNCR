@@ -158,6 +158,25 @@ class GroupExpenseFlowIntegrationTest {
     }
 
     @Test
+    @DisplayName("timestamps are serialized as UTC instants (ISO-8601 ending in Z)")
+    void timestampsCarryAnExplicitUtcZone() throws Exception {
+        // Regression test: timestamps used to be zone-less LocalDateTime values, so browsers
+        // guessed the zone and showed server time as local time.
+        String utcInstant = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$";
+
+        mockMvc.perform(post("/api/groups")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateGroupRequest("Zone Check"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.matchesPattern(utcInstant)));
+
+        mockMvc.perform(get("/api/users/me").header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.matchesPattern(utcInstant)));
+    }
+
+    @Test
     @DisplayName("a request with no Authorization header is rejected")
     void rejectsUnauthenticatedRequest() throws Exception {
         mockMvc.perform(get("/api/groups"))
