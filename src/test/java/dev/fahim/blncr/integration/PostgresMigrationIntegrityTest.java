@@ -44,7 +44,7 @@ class PostgresMigrationIntegrityTest {
         String latestMigration = jdbcTemplate.queryForObject(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1",
                 String.class);
-        assertThat(latestMigration).isEqualTo("7");
+        assertThat(latestMigration).isEqualTo("9");
         assertNotNullColumn("groups", "created_by");
         assertNotNullColumn("group_members", "group_id");
         assertNotNullColumn("group_members", "user_id");
@@ -97,12 +97,12 @@ class PostgresMigrationIntegrityTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
-        private void assertNotNullColumn(String table, String column) {
-                String nullable = jdbcTemplate.queryForObject("""
-                                SELECT is_nullable
-                                FROM information_schema.columns
-                                WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?
-                                """, String.class, table, column);
-                assertThat(nullable).isEqualTo("NO");
-        }
+    private void assertNotNullColumn(String table, String column) {
+        String nullable = jdbcTemplate.queryForObject("""
+                SELECT is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?
+                """, String.class, table, column);
+        assertThat(nullable).isEqualTo("NO");
+    }
 }
