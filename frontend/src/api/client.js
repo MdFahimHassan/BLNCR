@@ -3,6 +3,7 @@ import axios from "axios";
 // Base URL comes from an env var so it's trivial to point at a deployed
 // backend later (Phase 6) without touching code.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9090";
+export const AUTH_EXPIRED_EVENT = "blncr:auth-expired";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -36,11 +37,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("blncr_token");
       localStorage.removeItem("blncr_user");
-      if (!window.location.pathname.startsWith("/login")) {
-        window.location.assign("/login");
-      }
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
     }
 
-    return Promise.reject(new Error(message));
+    const normalizedError = new Error(message);
+    normalizedError.status = error.response?.status;
+    return Promise.reject(normalizedError);
   }
 );

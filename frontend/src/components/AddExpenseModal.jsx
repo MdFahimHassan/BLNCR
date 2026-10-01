@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "./Modal";
 import Field, { Input, Select } from "./Field";
 import Button from "./Button";
@@ -6,6 +6,7 @@ import Avatar from "./Avatar";
 import { useToast } from "../context/ToastContext";
 import { expenseApi } from "../api/endpoints";
 import { currencySymbol } from "../lib/format";
+import { EXPENSE_CATEGORIES } from "../lib/expenseCategories";
 
 const SPLIT_TYPES = [
   { value: "EQUAL", label: "Equal" },
@@ -13,26 +14,44 @@ const SPLIT_TYPES = [
   { value: "PERCENTAGE", label: "Percent" },
 ];
 
-export default function AddExpenseModal({ open, onClose, groupId, members, currentUserId, currency, onCreated }) {
+export default function AddExpenseModal({
+  open,
+  onClose,
+  groupId,
+  members,
+  currentUserId,
+  currency,
+  expenseToEdit,
+  onCreated,
+}) {
   const symbol = currencySymbol(currency);
   const toast = useToast();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [paidByUserId, setPaidByUserId] = useState(currentUserId);
   const [splitType, setSplitType] = useState("EQUAL");
+  const [category, setCategory] = useState("OTHER");
   const [selected, setSelected] = useState(() => new Set(members.map((m) => m.userId)));
   const [values, setValues] = useState({}); // userId -> string, used for EXACT / PERCENTAGE
   const [loading, setLoading] = useState(false);
+  const submissionRef = useRef({ signature: null, key: null });
 
   // Reset the form each time the modal is opened for a clean slate.
   useEffect(() => {
     if (open) {
       setDescription("");
-      setAmount("");
-      setPaidByUserId(currentUserId);
-      setSplitType("EQUAL");
-      setSelected(new Set(members.map((m) => m.userId)));
-      setValues({});
+      setDescription(expenseToEdit?.description ?? "");
+      setAmount(expenseToEdit?.amount ?? "");
+      setPaidByUserId(expenseToEdit?.paidByUserId ?? currentUserId);
+      setSplitType(expenseToEdit?.splitType === "PERCENTAGE" ? "EXACT" : expenseToEdit?.splitType ?? "EQUAL");
+      setCategory(expenseToEdit?.category ?? "OTHER");
+      const expenseSplits = expenseToEdit?.splits ?? [];
+      setSelected(new Set(expenseSplits.length ? expenseSplits.map((split) => split.userId) : members.map((m) => m.userId)));
+      setValues(Object.fromEntries(expenseSplits.map((split) => [
+        split.userId,
+        Number(split.amountOwed).toFixed(2),
+      ])));
+      submissionRef.current = { signature: null, key: null };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -97,21 +116,25 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || loading) return;
     setLoading(true);
     try {
       const splits = selectedMembers.map((m) => ({
         userId: m.userId,
         value: splitType === "EQUAL" ? null : Number(values[m.userId] ?? 0),
       }));
-      const expense = await expenseApi.create(groupId, {
+      const payload = {
         description: description.trim(),
         amount: Number(amount),
         paidByUserId: Number(paidByUserId),
         splitType,
+        category,
         splits,
-      });
-      toast.success("Expense added");
+      };
+      const expense = expenseToEdit
+        ? await expenseApi.update(groupId, expenseToEdit.id, payload)
+        : await createExpense(payload);
+      toast.success(expenseToEdit ? "Expense updated" : "Expense added");
       onCreated(expense);
       onClose();
     } catch (err) {
@@ -121,8 +144,16 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
     }
   };
 
+  const createExpense = async (payload) => {
+    const signature = JSON.stringify(payload);
+    if (submissionRef.current.signature !== signature) {
+      submissionRef.current = { signature, key: crypto.randomUUID() };
+    }
+    return expenseApi.create(groupId, payload, submissionRef.current.key);
+  };
+
   return (
-    <Modal open={open} onClose={onClose} title="Add expense" width="max-w-lg">
+    <Modal open={open} onClose={onClose} title={expenseToEdit ? "Edit expense" : "Add expense"} width="max-w-lg">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field label="Description" htmlFor="desc">
           <Input
@@ -133,6 +164,14 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+        </Field>
+
+        <Field label="Category" htmlFor="expense-category">
+          <Select id="expense-category" value={category} onChange={(event) => setCategory(event.target.value)}>
+            {EXPENSE_CATEGORIES.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </Select>
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
@@ -187,6 +226,11 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
             ))}
           </div>
         </Field>
+        {expenseToEdit?.splitType === "PERCENTAGE" && (
+          <p className="-mt-3 text-xs text-[var(--color-text-faint)]">
+            Existing percentage shares are loaded as exact amounts to preserve the saved split.
+          </p>
+        )}
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -286,7 +330,7 @@ export default function AddExpenseModal({ open, onClose, groupId, members, curre
             Cancel
           </Button>
           <Button type="submit" loading={loading} disabled={!isValid}>
-            Add expense
+            {expenseToEdit ? "Save changes" : "Add expense"}
           </Button>
         </div>
       </form>

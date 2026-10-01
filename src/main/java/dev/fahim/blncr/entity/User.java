@@ -20,11 +20,12 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
-    @Column(name = "profile_image", columnDefinition = "bytea")
-    private byte[] profileImage;
+    @Column(name = "profile_image_version")
+    private Long profileImageVersion;
 
-    @Column(name = "profile_image_content_type", length = 32)
-    private String profileImageContentType;
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active = true;
 
     private Instant createdAt;
 }

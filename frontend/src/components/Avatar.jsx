@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { initials, avatarHue } from "../lib/format";
+import { userApi } from "../api/endpoints";
 
 const sizeMap = {
   sm: "h-6 w-6 text-[10px]",
@@ -9,6 +11,35 @@ const sizeMap = {
 
 export default function Avatar({ name, id, src, size = "md", className = "" }) {
   const hue = avatarHue(id ?? name);
+  const [imageSrc, setImageSrc] = useState(null);
+
+  useEffect(() => {
+    if (!src) {
+      setImageSrc(null);
+      return undefined;
+    }
+    if (src.startsWith("data:")) {
+      setImageSrc(src);
+      return undefined;
+    }
+
+    let objectUrl;
+    let active = true;
+    userApi.avatar(src).then((image) => {
+      if (active) {
+        objectUrl = URL.createObjectURL(image);
+        setImageSrc(objectUrl);
+      }
+    }).catch(() => {
+      if (active) setImageSrc(null);
+    });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+
   return (
     <div
       className={`flex shrink-0 items-center justify-center rounded-full font-semibold ${sizeMap[size]} ${className}`}
@@ -19,7 +50,7 @@ export default function Avatar({ name, id, src, size = "md", className = "" }) {
       }}
       title={name}
     >
-      {src ? <img src={src} alt={name} className="h-full w-full rounded-full object-cover" /> : initials(name)}
+      {imageSrc ? <img src={imageSrc} alt={name} className="h-full w-full rounded-full object-cover" /> : initials(name)}
     </div>
   );
 }

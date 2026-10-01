@@ -1,6 +1,7 @@
 package dev.fahim.blncr.dto;
 
 import dev.fahim.blncr.entity.SplitType;
+import dev.fahim.blncr.entity.ExpenseCategory;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -35,5 +36,24 @@ public record CreateExpenseRequest(
 
         @NotEmpty(message = "At least one split participant is required")
         @Size(max = 100, message = "A split can include at most 100 participants")
-        List<@Valid ExpenseSplitInput> splits
-) {}
+                List<@Valid ExpenseSplitInput> splits,
+
+                @NotNull(message = "Category is required")
+                ExpenseCategory category
+) {
+        public CreateExpenseRequest(
+                        String description,
+                        BigDecimal amount,
+                        Long paidByUserId,
+                        SplitType splitType,
+                        List<ExpenseSplitInput> splits
+        ) {
+                this(description, amount, paidByUserId, splitType, splits, ExpenseCategory.OTHER);
+        }
+
+        public CreateExpenseRequest {
+                if (category == null) {
+                        category = ExpenseCategory.OTHER;
+                }
+        }
+}

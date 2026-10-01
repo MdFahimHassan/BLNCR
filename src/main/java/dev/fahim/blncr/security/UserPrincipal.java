@@ -19,12 +19,14 @@ public class UserPrincipal implements UserDetails {
     private final String name;
     private final String email;
     private final String passwordHash;
+    private final boolean active;
 
     public UserPrincipal(User user) {
         this.id = user.getId();
         this.name = user.getName();
         this.email = user.getEmail();
         this.passwordHash = user.getPasswordHash();
+        this.active = user.isActive();
     }
 
     @Override
@@ -40,5 +42,10 @@ public class UserPrincipal implements UserDetails {
     @Override
     public String getUsername() {
         return email;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return active;
     }
 }

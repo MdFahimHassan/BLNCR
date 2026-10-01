@@ -5,11 +5,13 @@ import dev.fahim.blncr.dto.GroupMemberResponse;
 import dev.fahim.blncr.dto.GroupResponse;
 import dev.fahim.blncr.entity.Group;
 import dev.fahim.blncr.entity.GroupMember;
+import dev.fahim.blncr.entity.GroupRole;
 import dev.fahim.blncr.entity.User;
 import dev.fahim.blncr.exception.InvalidRequestException;
 import dev.fahim.blncr.exception.NotGroupMemberException;
 import dev.fahim.blncr.exception.ResourceNotFoundException;
 import dev.fahim.blncr.repository.GroupMemberRepository;
+import dev.fahim.blncr.repository.GroupMemberCount;
 import dev.fahim.blncr.repository.GroupRepository;
 import dev.fahim.blncr.repository.UserRepository;
 import dev.fahim.blncr.validation.SupportedCurrencies;
@@ -18,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +54,7 @@ public class GroupService {
         GroupMember membership = GroupMember.builder()
                 .group(saved)
                 .user(creator)
+            .role(GroupRole.OWNER)
                 .joinedAt(Instant.now())
                 .build();
         groupMemberRepository.save(membership);
@@ -82,9 +87,19 @@ public class GroupService {
 
     @Transactional(readOnly = true)
     public List<GroupResponse> listMyGroups(Long userId) {
-        return groupMemberRepository.findByUserId(userId).stream()
-                .map(GroupMember::getGroup)
-                .map(group -> GroupResponse.from(group, groupMemberRepository.findByGroupId(group.getId()).size()))
+        List<GroupMember> memberships = groupMemberRepository.findByUserIdAndLeftAtIsNull(userId);
+        if (memberships.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> groupIds = memberships.stream().map(member -> member.getGroup().getId()).toList();
+        Map<Long, Long> memberCounts = groupMemberRepository.countMembersByGroupIds(groupIds).stream()
+            .collect(Collectors.toMap(GroupMemberCount::groupId, GroupMemberCount::memberCount));
+
+        return memberships.stream()
+            .map(member -> GroupResponse.from(member.getGroup(),
+                Math.toIntExact(memberCounts.getOrDefault(member.getGroup().getId(), 0L)),
+                member.getRole()))
                 .toList();
     }
 
@@ -93,9 +108,17 @@ public class GroupService {
         getGroupOrThrow(groupId);
         requireMembership(groupId, requesterId);
 
-        return groupMemberRepository.findByGroupId(groupId).stream()
+        return groupMemberRepository.findByGroupIdAndLeftAtIsNullOrderByJoinedAtAsc(groupId).stream()
                 .map(GroupMemberResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public GroupMemberResponse getMember(Long groupId, Long userId, Long requesterId) {
+        requireMembership(groupId, requesterId);
+        return groupMemberRepository.findByGroupIdAndUserIdAndLeftAtIsNull(groupId, userId)
+                .map(GroupMemberResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("Group member not found"));
     }
 
     private Group getGroupOrThrow(Long groupId) {

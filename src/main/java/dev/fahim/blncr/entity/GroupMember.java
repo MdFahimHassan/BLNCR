@@ -11,11 +11,18 @@ public class GroupMember {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne @JoinColumn(name = "group_id")
+    @ManyToOne(optional = false) @JoinColumn(name = "group_id", nullable = false)
     private Group group;
 
-    @ManyToOne @JoinColumn(name = "user_id")
+    @ManyToOne(optional = false) @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private GroupRole role = GroupRole.MEMBER;
+
     private Instant joinedAt;
+
+    private Instant leftAt;
 }

@@ -14,8 +14,8 @@ public class Group {
     @Column(nullable = false)
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
     private Instant createdAt;

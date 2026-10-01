@@ -1,15 +1,19 @@
 package dev.fahim.blncr.service;
 
 import dev.fahim.blncr.dto.AuthResponse;
+import dev.fahim.blncr.dto.DeleteAccountRequest;
 import dev.fahim.blncr.dto.UpdateProfileRequest;
 import dev.fahim.blncr.dto.UserResponse;
 import dev.fahim.blncr.entity.User;
+import dev.fahim.blncr.entity.UserAvatar;
 import dev.fahim.blncr.exception.EmailAlreadyInUseException;
 import dev.fahim.blncr.exception.InvalidCredentialsException;
 import dev.fahim.blncr.exception.InvalidRequestException;
 import dev.fahim.blncr.repository.UserRepository;
+import dev.fahim.blncr.repository.UserAvatarRepository;
 import dev.fahim.blncr.security.JwtService;
 import dev.fahim.blncr.security.UserPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +32,10 @@ public class UserService {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final UserRepository userRepository;
+    private final UserAvatarRepository userAvatarRepository;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
+    private final GroupManagementService groupManagementService;
 
     @Transactional(readOnly = true)
     public UserResponse getProfile(Long userId) {
@@ -76,17 +84,46 @@ public class UserService {
         }
 
         User user = findUser(userId);
-        user.setProfileImage(image);
-        user.setProfileImageContentType(contentType);
+        long version = user.getProfileImageVersion() == null ? 1 : user.getProfileImageVersion() + 1;
+        user.setProfileImageVersion(version);
+        userAvatarRepository.save(UserAvatar.builder()
+                .userId(userId)
+                .image(image)
+                .contentType(contentType)
+                .version(version)
+                .build());
         return UserResponse.from(userRepository.save(user));
     }
 
     @Transactional
     public UserResponse removeAvatar(Long userId) {
         User user = findUser(userId);
-        user.setProfileImage(null);
-        user.setProfileImageContentType(null);
+        userAvatarRepository.deleteById(userId);
+        user.setProfileImageVersion(null);
         return UserResponse.from(userRepository.save(user));
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.Optional<UserAvatar> getAvatar(Long userId) {
+        return userAvatarRepository.findById(userId);
+    }
+
+    @Transactional
+    public void deleteAccount(Long userId, String password, String authorization) {
+        User user = findUser(userId);
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new InvalidCredentialsException();
+        }
+
+        groupManagementService.prepareAccountDeletion(userId);
+        userAvatarRepository.deleteById(userId);
+        jwtService.revoke(authorization.substring(BEARER_PREFIX.length()));
+        user.setName("Deleted account");
+        user.setEmail("deleted-" + userId + "@deleted.invalid");
+        user.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+        user.setProfileImageVersion(null);
+        user.setActive(false);
+        userRepository.saveAndFlush(user);
     }
 
     private User findUser(Long userId) {

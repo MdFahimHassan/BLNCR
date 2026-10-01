@@ -12,13 +12,13 @@ public class Settlement {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne @JoinColumn(name = "group_id")
+    @ManyToOne(optional = false) @JoinColumn(name = "group_id", nullable = false)
     private Group group;
 
-    @ManyToOne @JoinColumn(name = "from_user")
+    @ManyToOne(optional = false) @JoinColumn(name = "from_user", nullable = false)
     private User fromUser;
 
-    @ManyToOne @JoinColumn(name = "to_user")
+    @ManyToOne(optional = false) @JoinColumn(name = "to_user", nullable = false)
     private User toUser;
 
     @Column(nullable = false)

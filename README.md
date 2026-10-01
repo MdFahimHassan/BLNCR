@@ -14,7 +14,7 @@
 
 ## The problem
 
-Splitting shared expenses is easy to track and hard to *settle*. A trip with five people and thirty expenses doesn't produce one debt — it produces a tangled web of small IOUs, and untangling it by hand is where every spreadsheet-based tracker gives up. Most expense splitters stop at listing who owes what. BLNCR treats the group's debts as a graph and simplifies them down to the **minimum number of payments** needed to zero everyone out — the same category of problem used in real-world settlement and netting systems.
+Splitting shared expenses is easy to track and hard to *settle*. A trip with five people and thirty expenses doesn't produce one debt — it produces a tangled web of small IOUs, and untangling it by hand is where every spreadsheet-based tracker gives up. Most expense splitters stop at listing who owes what. BLNCR treats the group's debts as a graph and uses a greedy heuristic to produce a compact payment plan that zeros everyone out. It often reduces the number of payments, but doesn't guarantee the mathematical minimum.
 
 ## Demo
 

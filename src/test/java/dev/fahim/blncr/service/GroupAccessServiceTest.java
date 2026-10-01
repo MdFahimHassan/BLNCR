@@ -53,7 +53,7 @@ class GroupAccessServiceTest {
     @Test
     @DisplayName("requireMembership passes silently for an actual member")
     void requireMembershipPassesForMember() {
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, 100L)).thenReturn(true);
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndLeftAtIsNull(1L, 100L)).thenReturn(true);
 
         groupAccessService.requireMembership(1L, 100L);
         // no exception -> pass
@@ -62,7 +62,7 @@ class GroupAccessServiceTest {
     @Test
     @DisplayName("requireMembership throws NotGroupMemberException for a non-member")
     void requireMembershipThrowsForNonMember() {
-        when(groupMemberRepository.existsByGroupIdAndUserId(1L, 100L)).thenReturn(false);
+        when(groupMemberRepository.existsByGroupIdAndUserIdAndLeftAtIsNull(1L, 100L)).thenReturn(false);
 
         assertThatThrownBy(() -> groupAccessService.requireMembership(1L, 100L))
                 .isInstanceOf(NotGroupMemberException.class);

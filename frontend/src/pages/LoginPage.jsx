@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import Field, { Input } from "../components/Field";
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [touched, setTouched] = useState({ email: false });
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,13 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      navigate("/dashboard");
+      const from = location.state?.from;
+      const destination = typeof from?.pathname === "string"
+        && from.pathname.startsWith("/")
+        && !from.pathname.startsWith("//")
+        ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
+        : "/dashboard";
+      navigate(destination, { replace: true });
     } catch (err) {
       toast.error(err.message);
     } finally {

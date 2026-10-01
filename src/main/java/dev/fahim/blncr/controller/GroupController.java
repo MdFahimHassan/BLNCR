@@ -1,11 +1,13 @@
 package dev.fahim.blncr.controller;
 
-import dev.fahim.blncr.dto.AddMemberRequest;
+import dev.fahim.blncr.dto.ChangeMemberRoleRequest;
 import dev.fahim.blncr.dto.CreateGroupRequest;
+import dev.fahim.blncr.dto.GroupInvitationResponse;
 import dev.fahim.blncr.dto.GroupMemberResponse;
 import dev.fahim.blncr.dto.GroupResponse;
 import dev.fahim.blncr.security.UserPrincipal;
 import dev.fahim.blncr.service.GroupService;
+import dev.fahim.blncr.service.GroupManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import java.util.List;
 public class GroupController {
 
     private final GroupService groupService;
+    private final GroupManagementService groupManagementService;
 
     @PostMapping
     public ResponseEntity<GroupResponse> createGroup(
@@ -44,13 +47,51 @@ public class GroupController {
         return groupService.listMembers(groupId, principal.getId());
     }
 
-    @PostMapping("/{groupId}/members")
-    public ResponseEntity<GroupMemberResponse> addMember(
+    @PostMapping("/{groupId}/invitations")
+    public ResponseEntity<GroupInvitationResponse> createInvitation(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long groupId
+    ) {
+        GroupInvitationResponse response = groupManagementService.createInvitation(groupId, principal.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("/{groupId}/members/{userId}/role")
+    public GroupMemberResponse changeRole(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long groupId,
-            @Valid @RequestBody AddMemberRequest request
+            @PathVariable Long userId,
+            @Valid @RequestBody ChangeMemberRoleRequest request
     ) {
-        GroupMemberResponse response = groupService.addMember(groupId, principal.getId(), request.email());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        groupManagementService.changeRole(groupId, principal.getId(), userId, request.role());
+        return groupService.getMember(groupId, userId, principal.getId());
+    }
+
+    @DeleteMapping("/{groupId}/members/{userId}")
+    public ResponseEntity<Void> removeMember(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long groupId,
+            @PathVariable Long userId
+    ) {
+        groupManagementService.removeMember(groupId, principal.getId(), userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{groupId}/leave")
+    public ResponseEntity<Void> leaveGroup(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long groupId
+    ) {
+        groupManagementService.leaveGroup(groupId, principal.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<Void> deleteGroup(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long groupId
+    ) {
+        groupManagementService.deleteGroup(groupId, principal.getId());
+        return ResponseEntity.noContent().build();
     }
 }

@@ -3,10 +3,13 @@ package dev.fahim.blncr.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.fahim.blncr.dto.AddMemberRequest;
 import dev.fahim.blncr.dto.CreateExpenseRequest;
+import dev.fahim.blncr.entity.ExpenseCategory;
 import dev.fahim.blncr.dto.CreateGroupRequest;
+import dev.fahim.blncr.dto.ChangeMemberRoleRequest;
 import dev.fahim.blncr.dto.CreateSettlementRequest;
 import dev.fahim.blncr.dto.ExpenseSplitInput;
 import dev.fahim.blncr.entity.SplitType;
+import dev.fahim.blncr.entity.GroupRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +25,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,34 +80,73 @@ class GroupExpenseFlowIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         Long groupId = objectMapper.readTree(groupJson).get("id").asLong();
 
-        // 2. Alice adds Bob by email.
-        String bobEmail = objectMapper.readTree(
-                mockMvc.perform(get("/api/users/me").header("Authorization", "Bearer " + bobToken))
-                        .andReturn().getResponse().getContentAsString()
-        ).get("email").asText();
+        // 2. Alice creates an invite link and Bob accepts it while authenticated.
+        String inviteJson = mockMvc.perform(post("/api/groups/{id}/invitations", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String inviteToken = objectMapper.readTree(inviteJson).get("token").asText();
 
-        mockMvc.perform(post("/api/groups/{id}/members", groupId)
-                        .header("Authorization", "Bearer " + aliceToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new AddMemberRequest(bobEmail))))
-                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/invitations/{token}/accept", inviteToken)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groupId").value(groupId));
 
         mockMvc.perform(get("/api/groups/{id}/members", groupId)
                         .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(2)));
 
+        mockMvc.perform(post("/api/groups/{id}/invitations", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch(
+                        "/api/groups/{groupId}/members/{userId}/role", groupId, bobId)
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ChangeMemberRoleRequest(GroupRole.ADMIN))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+
+        mockMvc.perform(post("/api/groups/{id}/invitations", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isCreated());
+
         // 3. Alice pays $60 for lift tickets, split equally between her and Bob -> Bob owes $30.
         CreateExpenseRequest expenseRequest = new CreateExpenseRequest(
                 "Lift tickets", new BigDecimal("60.00"), aliceId, SplitType.EQUAL,
                 List.of(new ExpenseSplitInput(aliceId, null), new ExpenseSplitInput(bobId, null)));
+        String idempotencyKey = java.util.UUID.randomUUID().toString();
 
-        mockMvc.perform(post("/api/groups/{id}/expenses", groupId)
+        String expenseJson = mockMvc.perform(post("/api/groups/{id}/expenses", groupId)
                         .header("Authorization", "Bearer " + aliceToken)
+                        .header("Idempotency-Key", idempotencyKey)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(expenseRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.splits", org.hamcrest.Matchers.hasSize(2)));
+                .andExpect(jsonPath("$.splits", org.hamcrest.Matchers.hasSize(2)))
+                .andReturn().getResponse().getContentAsString();
+        Long expenseId = objectMapper.readTree(expenseJson).get("id").asLong();
+
+        CreateExpenseRequest editedExpense = new CreateExpenseRequest(
+                "Lift tickets", new BigDecimal("60.00"), aliceId, SplitType.EQUAL,
+                List.of(new ExpenseSplitInput(aliceId, null), new ExpenseSplitInput(bobId, null)),
+                ExpenseCategory.ENTERTAINMENT);
+        mockMvc.perform(put("/api/groups/{groupId}/expenses/{expenseId}", groupId, expenseId)
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(editedExpense)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.category").value("ENTERTAINMENT"));
+
+        mockMvc.perform(post("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .header("Idempotency-Key", idempotencyKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(expenseRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(expenseId));
 
         // Bob can also see the expense (any member can list a group's expenses).
         mockMvc.perform(get("/api/groups/{id}/expenses", groupId)
@@ -140,6 +184,20 @@ class GroupExpenseFlowIntegrationTest {
                 .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(2)))
                 .andExpect(jsonPath("$[0].type").value("SETTLEMENT"))
                 .andExpect(jsonPath("$[1].type").value("EXPENSE"));
+
+        mockMvc.perform(post("/api/groups/{id}/leave", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/api/groups/{id}", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CalendarDots, Camera, FloppyDisk, Trash, UserCircle } from "@phosphor-icons/react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import Avatar from "./Avatar";
@@ -11,12 +12,16 @@ const MAX_AVATAR_BYTES = 512 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export default function ProfileEditor({ open, onClose }) {
-  const { user, saveProfile, uploadAvatar, removeAvatar } = useAuth();
+  const { user, saveProfile, uploadAvatar, removeAvatar, deleteAccount } = useAuth();
+  const navigate = useNavigate();
   const toast = useToast();
   const [form, setForm] = useState({ name: user.name, email: user.email });
   const [photoPreview, setPhotoPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (open) setForm({ name: user.name, email: user.email });
@@ -76,6 +81,20 @@ export default function ProfileEditor({ open, onClose }) {
       toast.error(error.message);
     } finally {
       setPhotoBusy(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword || deleteConfirmation !== "DELETE") return;
+    setDeleting(true);
+    try {
+      await deleteAccount(deletePassword);
+      toast.success("Your account has been deleted");
+      navigate("/", { replace: true });
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -164,6 +183,44 @@ export default function ProfileEditor({ open, onClose }) {
               Save changes
             </Button>
           </div>
+          <section className="mt-8 border-t border-[var(--color-border-soft)] pt-5">
+            <h3 className="text-sm font-semibold text-[var(--color-debit-text)]">Delete account</h3>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-faint)]">
+              Your personal details will be removed and past financial entries retained as Deleted account.
+              This cannot be undone.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Field label="Current password" htmlFor="delete-account-password">
+                <Input
+                  id="delete-account-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={deletePassword}
+                  onChange={(event) => setDeletePassword(event.target.value)}
+                />
+              </Field>
+              <Field label={'Type "DELETE" to confirm'} htmlFor="delete-account-confirmation">
+                <Input
+                  id="delete-account-confirmation"
+                  autoComplete="off"
+                  value={deleteConfirmation}
+                  onChange={(event) => setDeleteConfirmation(event.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                variant="danger"
+                icon={Trash}
+                loading={deleting}
+                disabled={!deletePassword || deleteConfirmation !== "DELETE"}
+                onClick={handleDeleteAccount}
+              >
+                Delete account
+              </Button>
+            </div>
+          </section>
         </form>
       </div>
     </Modal>

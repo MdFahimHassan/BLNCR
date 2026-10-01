@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { authApi, userApi } from "../api/endpoints";
+import { AUTH_EXPIRED_EVENT } from "../api/client";
 
 const AuthContext = createContext(null);
 
@@ -22,6 +23,12 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("blncr_user");
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleExpiredSession = () => setUser(null);
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleExpiredSession);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, handleExpiredSession);
+  }, []);
 
   useEffect(() => {
     if (!user) return undefined;
@@ -77,6 +84,13 @@ export function AuthProvider({ children }) {
     return profile;
   }, []);
 
+  const deleteAccount = useCallback(async (password) => {
+    await userApi.deleteAccount(password);
+    localStorage.removeItem("blncr_token");
+    localStorage.removeItem("blncr_user");
+    setUser(null);
+  }, []);
+
   const logout = useCallback(() => {
     // Best-effort server-side revocation so the token is dead even if someone copied it.
     const token = localStorage.getItem("blncr_token");
@@ -87,7 +101,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, saveProfile, uploadAvatar, removeAvatar }}>
+    <AuthContext.Provider value={{ user, login, register, logout, saveProfile, uploadAvatar, removeAvatar, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

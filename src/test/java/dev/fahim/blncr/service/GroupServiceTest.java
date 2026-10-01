@@ -9,6 +9,7 @@ import dev.fahim.blncr.entity.User;
 import dev.fahim.blncr.exception.NotGroupMemberException;
 import dev.fahim.blncr.exception.ResourceNotFoundException;
 import dev.fahim.blncr.repository.GroupMemberRepository;
+import dev.fahim.blncr.repository.GroupMemberCount;
 import dev.fahim.blncr.repository.GroupRepository;
 import dev.fahim.blncr.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -148,9 +149,9 @@ class GroupServiceTest {
         Group group = Group.builder().id(1L).name("Trip").createdBy(alice).build();
         GroupMember membership = GroupMember.builder().id(1L).group(group).user(alice).build();
 
-        when(groupMemberRepository.findByUserId(alice.getId())).thenReturn(List.of(membership));
-        when(groupMemberRepository.findByGroupId(1L)).thenReturn(List.of(membership,
-                GroupMember.builder().id(2L).group(group).user(bob).build()));
+        when(groupMemberRepository.findByUserIdAndLeftAtIsNull(alice.getId())).thenReturn(List.of(membership));
+        when(groupMemberRepository.countMembersByGroupIds(List.of(1L)))
+            .thenReturn(List.of(new GroupMemberCount(1L, 2L)));
 
         List<GroupResponse> groups = groupService.listMyGroups(alice.getId());
 

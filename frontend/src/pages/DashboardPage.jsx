@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, UsersThree } from "@phosphor-icons/react";
-import { groupApi } from "../api/endpoints";
+import { dashboardApi } from "../api/endpoints";
 import { useToast } from "../context/ToastContext";
-import { useAuth } from "../context/AuthContext";
-import { useGroupBalances } from "../lib/useGroupBalances";
 import { formatMoney } from "../lib/format";
 import GroupCard from "../components/GroupCard";
 import CreateGroupModal from "../components/CreateGroupModal";
@@ -12,20 +10,27 @@ import { PageSpinner, EmptyState } from "../components/Feedback";
 
 export default function DashboardPage() {
   const toast = useToast();
-  const { user } = useAuth();
   const [groups, setGroups] = useState(null);
+  const [byGroup, setByGroup] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
-  const byGroup = useGroupBalances(groups, user?.id);
 
   useEffect(() => {
-    groupApi
-      .list()
-      .then(setGroups)
+    dashboardApi
+      .summary()
+      .then(({ groups: loadedGroups, netBalances }) => {
+        setGroups(loadedGroups);
+        setByGroup(Object.fromEntries(
+          Object.entries(netBalances ?? {}).map(([groupId, net]) => [groupId, { net: Number(net) }]),
+        ));
+      })
       .catch((err) => toast.error(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleCreated = (group) => setGroups((prev) => [group, ...(prev ?? [])]);
+  const handleCreated = (group) => {
+    setGroups((prev) => [group, ...(prev ?? [])]);
+    setByGroup((prev) => ({ ...prev, [group.id]: { net: 0 } }));
+  };
 
   if (groups === null) return <PageSpinner label="Loading your groups" />;
 

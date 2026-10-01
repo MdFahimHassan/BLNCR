@@ -3,6 +3,7 @@ package dev.fahim.blncr.dto;
 import dev.fahim.blncr.entity.Expense;
 import dev.fahim.blncr.entity.ExpenseSplit;
 import dev.fahim.blncr.entity.SplitType;
+import dev.fahim.blncr.entity.ExpenseCategory;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -17,7 +18,9 @@ public record ExpenseResponse(
         BigDecimal amount,
         Long paidByUserId,
         String paidByName,
+        Long createdByUserId,
         SplitType splitType,
+        ExpenseCategory category,
         Instant createdAt,
         List<ExpenseSplitResponse> splits
 ) {
@@ -29,7 +32,9 @@ public record ExpenseResponse(
                 .amount(expense.getAmount())
                 .paidByUserId(expense.getPaidBy().getId())
                 .paidByName(expense.getPaidBy().getName())
+                .createdByUserId(expense.getCreatedBy() == null ? null : expense.getCreatedBy().getId())
                 .splitType(expense.getSplitType())
+                .category(expense.getCategory())
                 .createdAt(expense.getCreatedAt())
                 .splits(splits.stream().map(ExpenseSplitResponse::from).toList())
                 .build();

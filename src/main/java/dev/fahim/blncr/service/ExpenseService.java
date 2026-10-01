@@ -23,6 +23,8 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,8 +39,23 @@ public class ExpenseService {
 
     @Transactional
     public ExpenseResponse addExpense(Long groupId, Long requesterId, CreateExpenseRequest request) {
+        return addExpense(groupId, requesterId, request, null);
+    }
+
+    @Transactional
+    public ExpenseResponse addExpense(
+            Long groupId, Long requesterId, CreateExpenseRequest request, UUID idempotencyKey) {
         Group group = groupAccessService.getGroupOrThrow(groupId);
         groupAccessService.requireMembership(groupId, requesterId);
+
+        if (idempotencyKey != null) {
+            Optional<Expense> existing = expenseRepository.findByCreatedByIdAndGroupIdAndIdempotencyKey(
+                    requesterId, groupId, idempotencyKey);
+            if (existing.isPresent()) {
+                Expense expense = existing.get();
+                return ExpenseResponse.from(expense, expenseSplitRepository.findByExpenseId(expense.getId()));
+            }
+        }
 
         User paidBy = userRepository.findById(request.paidByUserId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -55,7 +72,7 @@ public class ExpenseService {
             case PERCENTAGE -> splitCalculator.calculatePercentage(amount, request.splits());
         };
 
-        Map<Long, User> membersById = groupAccessService.getMembers(groupId).stream()
+        Map<Long, User> membersById = groupAccessService.getActiveMembers(groupId).stream()
                 .map(GroupMember::getUser)
                 .collect(Collectors.toMap(User::getId, u -> u));
 
@@ -68,6 +85,9 @@ public class ExpenseService {
         Expense expense = Expense.builder()
                 .group(group)
                 .paidBy(paidBy)
+            .createdBy(membersById.get(requesterId))
+            .idempotencyKey(idempotencyKey)
+                .category(request.category())
                 .amount(amount)
                 .description(request.description().trim())
                 .splitType(request.splitType())
@@ -87,17 +107,104 @@ public class ExpenseService {
         return ExpenseResponse.from(saved, splits);
     }
 
+    @Transactional
+    public ExpenseResponse updateExpense(
+            Long groupId, Long requesterId, Long expenseId, CreateExpenseRequest request) {
+        groupAccessService.getGroupOrThrow(groupId);
+        Expense expense = findExpense(groupId, expenseId);
+        groupAccessService.requireExpenseManager(groupId, requesterId, expense);
+        Map<Long, BigDecimal> owedByUserId = calculateSplits(request);
+        Map<Long, User> membersById = activeMembersById(groupId);
+        requireSplitMembers(owedByUserId, membersById);
+
+        User paidBy = membersById.get(request.paidByUserId());
+        if (paidBy == null) {
+            throw new InvalidRequestException("The payer must be an active member of this group");
+        }
+
+        expense.setDescription(request.description().trim());
+        expense.setAmount(request.amount().setScale(2, RoundingMode.HALF_UP));
+        expense.setPaidBy(paidBy);
+        expense.setSplitType(request.splitType());
+        expense.setCategory(request.category());
+        expenseSplitRepository.deleteByExpenseId(expenseId);
+        expenseSplitRepository.flush();
+
+        List<ExpenseSplit> splits = createSplits(expense, owedByUserId, membersById);
+        expenseSplitRepository.saveAll(splits);
+        return ExpenseResponse.from(expenseRepository.save(expense), splits);
+    }
+
+    @Transactional
+    public void deleteExpense(Long groupId, Long requesterId, Long expenseId) {
+        groupAccessService.getGroupOrThrow(groupId);
+        Expense expense = findExpense(groupId, expenseId);
+        groupAccessService.requireExpenseManager(groupId, requesterId, expense);
+        expenseSplitRepository.deleteByExpenseId(expenseId);
+        expenseSplitRepository.flush();
+        expenseRepository.delete(expense);
+    }
+
     @Transactional(readOnly = true)
     public List<ExpenseResponse> listExpenses(Long groupId, Long requesterId) {
         groupAccessService.getGroupOrThrow(groupId);
         groupAccessService.requireMembership(groupId, requesterId);
 
-        return expenseRepository.findByGroupIdOrderByCreatedAtDesc(groupId).stream()
-                .map(expense -> ExpenseResponse.from(expense, expenseSplitRepository.findByExpenseId(expense.getId())))
+        List<Expense> expenses = expenseRepository.findByGroupIdOrderByCreatedAtDesc(groupId);
+        if (expenses.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> expenseIds = expenses.stream().map(Expense::getId).toList();
+        Map<Long, List<ExpenseSplit>> splitsByExpense = expenseSplitRepository.findByExpenseIdIn(expenseIds).stream()
+            .collect(Collectors.groupingBy(split -> split.getExpense().getId()));
+
+        return expenses.stream()
+            .map(expense -> ExpenseResponse.from(
+                expense, splitsByExpense.getOrDefault(expense.getId(), List.of())))
                 .toList();
     }
 
     private List<Long> extractUserIds(List<ExpenseSplitInput> splits) {
         return splits.stream().map(ExpenseSplitInput::userId).toList();
+    }
+
+    private Expense findExpense(Long groupId, Long expenseId) {
+        return expenseRepository.findByIdAndGroupId(expenseId, groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
+    }
+
+    private Map<Long, BigDecimal> calculateSplits(CreateExpenseRequest request) {
+        BigDecimal amount = request.amount().setScale(2, RoundingMode.HALF_UP);
+        return switch (request.splitType()) {
+            case EQUAL -> splitCalculator.calculateEqual(amount, extractUserIds(request.splits()));
+            case EXACT -> splitCalculator.calculateExact(amount, request.splits());
+            case PERCENTAGE -> splitCalculator.calculatePercentage(amount, request.splits());
+        };
+    }
+
+    private Map<Long, User> activeMembersById(Long groupId) {
+        return groupAccessService.getActiveMembers(groupId).stream()
+                .map(GroupMember::getUser)
+                .collect(Collectors.toMap(User::getId, user -> user));
+    }
+
+    private void requireSplitMembers(Map<Long, BigDecimal> owedByUserId, Map<Long, User> membersById) {
+        for (Long userId : owedByUserId.keySet()) {
+            if (!membersById.containsKey(userId)) {
+                throw new InvalidRequestException("User " + userId + " is not an active member of this group");
+            }
+        }
+    }
+
+    private List<ExpenseSplit> createSplits(
+            Expense expense, Map<Long, BigDecimal> owedByUserId, Map<Long, User> membersById) {
+        return owedByUserId.entrySet().stream()
+                .map(entry -> ExpenseSplit.builder()
+                        .expense(expense)
+                        .user(membersById.get(entry.getKey()))
+                        .amountOwed(entry.getValue())
+                        .build())
+                .toList();
     }
 }

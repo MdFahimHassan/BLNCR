@@ -13,6 +13,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const GroupPage = lazy(() => import("./pages/GroupPage"));
+const InviteAcceptPage = lazy(() => import("./pages/InviteAcceptPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 
@@ -77,6 +78,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <GroupPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/invites/:token"
+          element={
+            <ProtectedRoute>
+              <InviteAcceptPage />
             </ProtectedRoute>
           }
         />

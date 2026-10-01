@@ -2,7 +2,6 @@ package dev.fahim.blncr.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.fahim.blncr.dto.AddMemberRequest;
 import dev.fahim.blncr.dto.CreateGroupRequest;
 import dev.fahim.blncr.dto.CreateSettlementRequest;
 import dev.fahim.blncr.dto.RegisterRequest;
@@ -102,11 +101,14 @@ class SecurityIntegrationTest {
         long groupId = objectMapper.readTree(groupJson).get("id").asLong();
 
         for (JsonNode member : new JsonNode[]{bob, carol}) {
-            mockMvc.perform(post("/api/groups/{id}/members", groupId)
-                            .header("Authorization", "Bearer " + aliceToken)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(new AddMemberRequest(member.get("email").asText()))))
-                    .andExpect(status().isCreated());
+            String inviteJson = mockMvc.perform(post("/api/groups/{id}/invitations", groupId)
+                            .header("Authorization", "Bearer " + aliceToken))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse().getContentAsString();
+            String inviteToken = objectMapper.readTree(inviteJson).get("token").asText();
+            mockMvc.perform(post("/api/invitations/{token}/accept", inviteToken)
+                            .header("Authorization", "Bearer " + member.get("token").asText()))
+                    .andExpect(status().isOk());
         }
 
         // Bob tries to record "Alice paid Carol" - a payment he is not part of -> forbidden.

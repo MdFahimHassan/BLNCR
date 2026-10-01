@@ -49,9 +49,13 @@ public class BalanceService {
         }
 
         // Expenses: the payer is credited the full amount, each split participant is debited their share.
-        for (Expense expense : expenseRepository.findByGroupId(groupId)) {
+        List<Expense> expenses = expenseRepository.findByGroupId(groupId);
+        for (Expense expense : expenses) {
             net.merge(expense.getPaidBy().getId(), expense.getAmount(), BigDecimal::add);
-            for (ExpenseSplit split : expenseSplitRepository.findByExpenseId(expense.getId())) {
+        }
+        if (!expenses.isEmpty()) {
+            List<Long> expenseIds = expenses.stream().map(Expense::getId).toList();
+            for (ExpenseSplit split : expenseSplitRepository.findByExpenseIdIn(expenseIds)) {
                 net.merge(split.getUser().getId(), split.getAmountOwed(), BigDecimal::subtract);
             }
         }
@@ -78,9 +82,9 @@ public class BalanceService {
 
     /**
      * Debt-simplification algorithm: repeatedly matches the largest net creditor with the
-     * largest net debtor and settles the smaller of the two amounts between them. This greedy
-     * "largest first" strategy minimizes the number of person-to-person transactions needed to
-     * zero out the whole group, instead of everyone settling every pairwise debt individually.
+    * largest net debtor and settles the smaller of the two amounts between them. This greedy
+    * "largest first" heuristic produces a compact plan, but does not guarantee the fewest possible
+    * person-to-person transactions for every balance configuration.
      */
     private List<SettlementSuggestion> simplifyDebts(Map<Long, BigDecimal> netBalances, Map<Long, User> usersById) {
         List<MutableBalance> creditors = new ArrayList<>();

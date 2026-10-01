@@ -7,7 +7,7 @@
 ## Short version (project card)
 
 **BLNCR — Group Expense Splitter**
-A Splitwise-style expense splitter with a debt-simplification engine that reduces a group's tangled IOUs to the minimum number of payments needed to settle up. Full-stack: Spring Boot + PostgreSQL API, React + Tailwind frontend, JWT auth, Dockerized and deployed on Railway/Vercel with CI on every push.
+A Splitwise-style expense splitter with a greedy debt-simplification heuristic that turns a group's tangled IOUs into a compact payment plan. It often reduces the payment count but does not guarantee the mathematical minimum. Full-stack: Spring Boot + PostgreSQL API, React + Tailwind frontend, JWT auth, Dockerized and deployed on Railway/Vercel with CI on every push.
 
 **Stack:** Java 21 · Spring Boot · PostgreSQL · React · Tailwind · Docker · GitHub Actions
 **Links:** [Live app](https://blncr-xi.vercel.app/) · [API](https://blncr-production.up.railway.app/) · [Source](https://github.com/MdFahimHassan/BLNCR)
@@ -18,7 +18,7 @@ A Splitwise-style expense splitter with a debt-simplification engine that reduce
 
 ### What it is
 
-BLNCR is a full-stack group-expense-splitting app — think Splitwise. Users create groups, log shared expenses with flexible split rules (equal, exact amount, or percentage), and see a running balance of who owes whom. What sets it apart from a basic CRUD tracker is the **debt-simplification engine**: instead of just listing every pairwise debt, BLNCR computes the smallest possible set of payments that zeroes the whole group out — the same class of problem used in real settlement/netting systems.
+BLNCR is a full-stack group-expense-splitting app — think Splitwise. Users create groups, log shared expenses with flexible split rules (equal, exact amount, or percentage), and see a running balance of who owes whom. What sets it apart from a basic CRUD tracker is the **debt-simplification engine**: instead of listing every pairwise debt, BLNCR uses a greedy heuristic to produce a compact payment plan that zeroes the whole group out. The heuristic is useful in practice but does not guarantee the globally smallest plan.
 
 ### Why I built it
 

@@ -3,7 +3,6 @@ package dev.fahim.blncr.dto;
 import dev.fahim.blncr.entity.User;
 import lombok.Builder;
 
-import java.util.Base64;
 import java.time.Instant;
 
 @Builder
@@ -20,8 +19,8 @@ public record UserResponse(
                 .name(user.getName())
                 .email(user.getEmail())
                 .createdAt(user.getCreatedAt())
-                .avatar(user.getProfileImage() == null ? null : "data:"
-                    + user.getProfileImageContentType() + ";base64," + Base64.getEncoder().encodeToString(user.getProfileImage()))
+                .avatar(user.getProfileImageVersion() == null ? null
+                    : "/api/users/me/avatar?v=" + user.getProfileImageVersion())
                 .build();
     }
 }

@@ -1,6 +1,7 @@
 package dev.fahim.blncr.dto;
 
 import dev.fahim.blncr.entity.Expense;
+import dev.fahim.blncr.entity.ExpenseCategory;
 import dev.fahim.blncr.entity.Settlement;
 import lombok.Builder;
 
@@ -20,6 +21,7 @@ public record ActivityItem(
         Long id,
         String description,
         BigDecimal amount,
+        ExpenseCategory category,
         Long primaryUserId,
         String primaryUserName,
         Long secondaryUserId,
@@ -32,6 +34,7 @@ public record ActivityItem(
                 .id(expense.getId())
                 .description(expense.getDescription())
                 .amount(expense.getAmount())
+                .category(expense.getCategory())
                 .primaryUserId(expense.getPaidBy().getId())
                 .primaryUserName(expense.getPaidBy().getName())
                 .timestamp(expense.getCreatedAt())

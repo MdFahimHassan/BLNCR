@@ -81,7 +81,7 @@ class BalanceServiceTest {
         // Alice paid $50, split equally -> Bob owes Alice $25.
         Expense expense = expense(1L, alice, new BigDecimal("50.00"));
         when(expenseRepository.findByGroupId(GROUP_ID)).thenReturn(List.of(expense));
-        when(expenseSplitRepository.findByExpenseId(1L)).thenReturn(List.of(
+        when(expenseSplitRepository.findByExpenseIdIn(List.of(1L))).thenReturn(List.of(
                 split(alice, new BigDecimal("25.00")),
                 split(bob, new BigDecimal("25.00"))
         ));
@@ -108,7 +108,7 @@ class BalanceServiceTest {
 
         Expense expense = expense(1L, alice, new BigDecimal("50.00"));
         when(expenseRepository.findByGroupId(GROUP_ID)).thenReturn(List.of(expense));
-        when(expenseSplitRepository.findByExpenseId(1L)).thenReturn(List.of(
+        when(expenseSplitRepository.findByExpenseIdIn(List.of(1L))).thenReturn(List.of(
                 split(alice, new BigDecimal("25.00")),
                 split(bob, new BigDecimal("25.00"))
         ));
@@ -147,7 +147,7 @@ class BalanceServiceTest {
         // Alice paid 60 total, split equally among all 3 -> Alice +40, Bob -20, Carol -20.
         Expense expense = expense(1L, alice, new BigDecimal("60.00"));
         when(expenseRepository.findByGroupId(GROUP_ID)).thenReturn(List.of(expense));
-        when(expenseSplitRepository.findByExpenseId(1L)).thenReturn(List.of(
+        when(expenseSplitRepository.findByExpenseIdIn(List.of(1L))).thenReturn(List.of(
                 split(alice, new BigDecimal("20.00")),
                 split(bob, new BigDecimal("20.00")),
                 split(carol, new BigDecimal("20.00"))
