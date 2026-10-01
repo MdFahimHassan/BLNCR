@@ -34,7 +34,7 @@ class PostgresMigrationIntegrityTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
-        registry.add("jwt.secret", () -> "test-only-secret-key-for-postgres-container-tests-123456");
+        registry.add("jwt.secret", () -> "dGVzdC1vbmx5LXNlY3JldC1rZXktZm9yLWJsbmNyLWp1bml0LXRlc3RzLTEyMzQ1Ng==");
         registry.add("cors.allowed-origins", () -> "http://localhost:5173");
         registry.add("app.email.mx-check", () -> "false");
     }
