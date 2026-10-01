@@ -8,7 +8,9 @@ export default defineConfig({
     port: 5173,
   },
   test: {
-    environment: 'node',
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.js'],
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

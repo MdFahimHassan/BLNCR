@@ -77,6 +77,31 @@ jobs:
           path: frontend/coverage/
           if-no-files-found: error
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend for end-to-end tests
+        working-directory: .
+        run: docker compose up -d --build backend
+        env:
+          DB_PASSWORD: ci-e2e-only-password
+          JWT_SECRET: dGVzdC1vbmx5LXNlY3JldC1rZXktZm9yLWJsbmNyLWp1bml0LXRlc3RzLTEyMzQ1Ng==
+          CORS_ALLOWED_ORIGINS: http://127.0.0.1:5173,http://localhost:5173
+          EMAIL_MX_CHECK: false
+
+      - name: Run browser end-to-end flow
+        run: npm run test:e2e
+        env:
+          VITE_API_BASE_URL: http://localhost:9090
+
+      - name: Stop backend services
+        if: always()
+        working-directory: .
+        run: docker compose down
+        env:
+          DB_PASSWORD: ci-e2e-only-password
+          JWT_SECRET: dGVzdC1vbmx5LXNlY3JldC1rZXktZm9yLWJsbmNyLWp1bml0LXRlc3RzLTEyMzQ1Ng==
+
       - name: Build
         # A placeholder API URL is enough — this only verifies the production
         # build compiles, it doesn't call the API.

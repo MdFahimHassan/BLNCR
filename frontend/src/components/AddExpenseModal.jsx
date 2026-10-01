@@ -14,6 +14,14 @@ const SPLIT_TYPES = [
   { value: "PERCENTAGE", label: "Percent" },
 ];
 
+function scaledInteger(value, scale = 2) {
+  const text = String(value ?? "").trim();
+  if (!/^\d+(\.\d+)?$/.test(text)) return 0;
+  const [whole, fraction = ""] = text.split(".");
+  if (fraction.length > scale) return Number.NaN;
+  return Number(whole) * (10 ** scale) + Number(fraction.slice(0, scale).padEnd(scale, "0"));
+}
+
 export default function AddExpenseModal({
   open,
   onClose,
@@ -39,7 +47,6 @@ export default function AddExpenseModal({
   // Reset the form each time the modal is opened for a clean slate.
   useEffect(() => {
     if (open) {
-      setDescription("");
       setDescription(expenseToEdit?.description ?? "");
       setAmount(expenseToEdit?.amount ?? "");
       setPaidByUserId(expenseToEdit?.paidByUserId ?? currentUserId);
@@ -70,17 +77,19 @@ export default function AddExpenseModal({
 
   const selectedMembers = members.filter((m) => selected.has(m.userId));
 
-  const exactTotal = useMemo(
-    () => selectedMembers.reduce((sum, m) => sum + (Number(values[m.userId]) || 0), 0),
+  const exactTotalCents = useMemo(
+    () => selectedMembers.reduce((sum, m) => sum + scaledInteger(values[m.userId]), 0),
     [values, selectedMembers]
   );
-  const percentTotal = exactTotal;
+  const percentageTotalBasisPoints = useMemo(
+    () => selectedMembers.reduce((sum, m) => sum + scaledInteger(values[m.userId]), 0),
+    [values, selectedMembers]
+  );
 
   const splitEvenly = () => {
     if (selectedMembers.length === 0) return;
     if (splitType === "EXACT") {
-      const amt = Number(amount) || 0;
-      const cents = Math.round(amt * 100);
+      const cents = scaledInteger(amount);
       const base = Math.floor(cents / selectedMembers.length);
       const remainder = cents - base * selectedMembers.length;
       const next = {};
@@ -107,12 +116,12 @@ export default function AddExpenseModal({
 
   const isValid =
     description.trim() &&
-    Number(amount) > 0 &&
+    scaledInteger(amount) > 0 &&
     paidByUserId &&
     selectedMembers.length > 0 &&
     (splitType === "EQUAL" ||
-      (splitType === "EXACT" && Math.abs(exactTotal - Number(amount)) < 0.01) ||
-      (splitType === "PERCENTAGE" && Math.abs(percentTotal - 100) < 0.01));
+      (splitType === "EXACT" && exactTotalCents === scaledInteger(amount)) ||
+      (splitType === "PERCENTAGE" && percentageTotalBasisPoints === 10000));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -121,11 +130,11 @@ export default function AddExpenseModal({
     try {
       const splits = selectedMembers.map((m) => ({
         userId: m.userId,
-        value: splitType === "EQUAL" ? null : Number(values[m.userId] ?? 0),
+        value: splitType === "EQUAL" ? null : values[m.userId] ?? "0",
       }));
       const payload = {
         description: description.trim(),
-        amount: Number(amount),
+        amount: amount.trim(),
         paidByUserId: Number(paidByUserId),
         splitType,
         category,
@@ -263,6 +272,7 @@ export default function AddExpenseModal({
                   <input
                     type="checkbox"
                     checked={checked}
+                    aria-label={`Include ${m.name} in split`}
                     onChange={() => toggleMember(m.userId)}
                     className="h-4 w-4 accent-[var(--color-accent)]"
                   />
@@ -272,12 +282,16 @@ export default function AddExpenseModal({
                   </span>
                   {splitType !== "EQUAL" && checked && (
                     <div className="relative w-24">
-                      {splitType === "EXACT" && (
+                      <label className="sr-only" htmlFor={`split-value-${m.userId}`}>
+                        {m.name} split value
+                      </label>
+                          {splitType === "EXACT" && (
                         <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-faint)]">
                           {symbol}
                         </span>
                       )}
                       <input
+                        id={`split-value-${m.userId}`}
                         type="number"
                         min="0"
                         step="0.01"
@@ -304,23 +318,23 @@ export default function AddExpenseModal({
           {splitType === "EXACT" && (
             <p
               className={`text-xs ledger-figure ${
-                Math.abs(exactTotal - Number(amount || 0)) < 0.01
+                exactTotalCents === scaledInteger(amount || 0)
                   ? "text-[var(--color-credit-text)]"
                   : "text-[var(--color-debit-text)]"
               }`}
             >
-              {symbol}{exactTotal.toFixed(2)} of {symbol}{Number(amount || 0).toFixed(2)} assigned
+              {symbol}{(exactTotalCents / 100).toFixed(2)} of {symbol}{(scaledInteger(amount || 0) / 100).toFixed(2)} assigned
             </p>
           )}
           {splitType === "PERCENTAGE" && (
             <p
               className={`text-xs ledger-figure ${
-                Math.abs(percentTotal - 100) < 0.01
+                percentageTotalBasisPoints === 10000
                   ? "text-[var(--color-credit-text)]"
                   : "text-[var(--color-debit-text)]"
               }`}
             >
-              {percentTotal.toFixed(2)}% of 100% assigned
+              {(percentageTotalBasisPoints / 100).toFixed(2)}% of 100% assigned
             </p>
           )}
         </div>
