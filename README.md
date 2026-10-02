@@ -24,22 +24,30 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 
 [▶ Try the live app](https://blncr-xi.vercel.app/): fastest way to see it working end to end. If the API has been idle, the first request can be slow while the container wakes up (depends on the hosting tier).
 
+<p align="center">
+  <img src="docs/screenshots/03-balances.png" alt="Net balances per member and the suggested settle-up plan" width="100%"><br>
+  <sub><b>Balances</b>: net position per member and a compact payment plan</sub>
+</p>
+
 <table>
   <tr>
+    <td width="50%"><img src="docs/screenshots/01-dashboard.png" alt="Dashboard listing groups with the user's balance in each"></td>
     <td width="50%"><img src="docs/screenshots/02-expenses.png" alt="Group expenses with category filters and search"></td>
-    <td width="50%"><img src="docs/screenshots/03-balances.png" alt="Net balances and the suggested settle-up plan"></td>
-  </tr>
-  <tr>
-    <td><sub><b>Expenses</b>: equal, exact and percentage splits, categories, search</sub></td>
-    <td><sub><b>Balances</b>: net position per member and a compact payment plan</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/01-dashboard.png" alt="Dashboard listing groups with the user's balance in each"></td>
-    <td align="center"><img src="docs/screenshots/06-mobile-group.png" alt="Group page on a phone" height="420"> <img src="docs/screenshots/07-mobile-add-expense.png" alt="Add-expense dialog on a phone" height="420"></td>
   </tr>
   <tr>
     <td><sub><b>Dashboard</b>: every group and your balance in it, from one API call</sub></td>
-    <td><sub><b>Mobile</b>: built phone-first, checked at 360px wide</sub></td>
+    <td><sub><b>Expenses</b>: equal, exact and percentage splits, categories, search</sub></td>
+  </tr>
+</table>
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/screenshots/06-mobile-group.png" alt="Group expenses on a phone" width="260"></td>
+    <td align="center"><img src="docs/screenshots/07-mobile-add-expense.png" alt="Add-expense dialog on a phone" width="260"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Mobile</b>: built phone-first, checked at 360px wide</sub></td>
+    <td align="center"><sub><b>Add expense</b>: equal, exact or percent splits</sub></td>
   </tr>
 </table>
 
