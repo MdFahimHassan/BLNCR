@@ -58,7 +58,7 @@ export default function ActivityFeed({ items, currentUserId, currency }) {
       {visibleItems.map((item) => (
         <div key={`${item.type}-${item.id}`} className="flex items-center gap-3.5 bg-[var(--color-surface)] px-4 py-3.5">
           <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] ${
+            className={`hidden h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] sm:flex ${
               item.type === "SETTLEMENT"
                 ? "bg-[var(--color-credit-soft)] text-[var(--color-credit-text)]"
                 : "bg-[var(--color-surface-3)] text-[var(--color-text-faint)]"
@@ -76,7 +76,7 @@ export default function ActivityFeed({ items, currentUserId, currency }) {
                 {item.secondaryUserId === currentUserId ? "you" : item.secondaryUserName}
               </p>
             ) : (
-              <p className="truncate text-sm font-medium text-[var(--color-text)]">{item.description}</p>
+              <p className="break-words text-sm font-medium leading-snug text-[var(--color-text)] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">{item.description}</p>
             )}
             <p className="mt-0.5 text-xs text-[var(--color-text-faint)]">
               {item.type === "SETTLEMENT" ? "Settlement" : `Paid by ${item.primaryUserId === currentUserId ? "you" : item.primaryUserName}`}

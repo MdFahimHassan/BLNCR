@@ -269,13 +269,13 @@ export default function GroupPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+            className={`flex min-w-0 flex-1 flex-col items-center gap-1 whitespace-nowrap border-b-2 px-2 py-2 text-xs font-medium transition-colors sm:flex-none sm:flex-row sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm ${
               tab === t.key
                 ? "border-[var(--color-accent)] text-[var(--color-text)]"
                 : "border-transparent text-[var(--color-text-faint)] hover:text-[var(--color-text-soft)]"
             }`}
           >
-            <t.icon size={15} />
+            <t.icon size={17} aria-hidden="true" />
             {t.label}
           </button>
         ))}
