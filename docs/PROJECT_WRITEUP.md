@@ -9,7 +9,7 @@
 **BLNCR — Group Expense Splitter**
 A Splitwise-style expense splitter with a greedy debt-simplification heuristic that turns a group's tangled IOUs into a compact payment plan. It often reduces the payment count but does not guarantee the mathematical minimum. Full-stack: Spring Boot + PostgreSQL API, React + Tailwind frontend, JWT auth, Dockerized and deployed on Railway/Vercel with CI on every push.
 
-**Stack:** Java 21 · Spring Boot · PostgreSQL · React · Tailwind · Docker · GitHub Actions
+**Stack:** Java 21 · Spring Boot · PostgreSQL · React · Tailwind · Docker · GitHub Actions · Testcontainers · Playwright
 **Links:** [Live app](https://blncr-xi.vercel.app/) · [API](https://blncr-production.up.railway.app/) · [Source](https://github.com/MdFahimHassan/BLNCR)
 
 The SPA keeps its bearer JWT in `localStorage`. This is a deliberate trade-off: the restrictive API CSP and absence of third-party scripts reduce script-injection exposure, but a successful XSS could still read browser storage. Login throttling and revocation are in-memory and are therefore single-instance protections, not shared controls for horizontal deployments.
@@ -32,18 +32,21 @@ I wanted a first portfolio project with genuine algorithmic depth rather than an
 - **Debt simplification.** Given the group's net balances, a greedy algorithm repeatedly settles the largest creditor against the largest debtor until everyone is at zero. True minimum-transaction netting is NP-hard in general, so this is a heuristic — but it's the standard, interview-relevant approach and produces a short, clean payment list in practice.
 - **Layered backend.** `controller → service → repository`, with the split/balance logic isolated in plain service classes that don't know about HTTP or the database — so the core algorithms are unit-testable without a running Spring context.
 - **Auth.** Stateless JWT, custom filter chain, BCrypt password hashing.
+- **Real group management, not just a ledger.** Single-use invite links (stored only as SHA-256 hashes), owner/admin/member roles with ownership transfer, and expense edit/delete restricted to the creator or an admin. Leaving a group, removing someone, or deleting an account is blocked while a balance is unsettled, because settlements can only be recorded between active members and the debt would otherwise be stranded.
+- **Safe writes and honest time.** Expense creation takes an idempotency key so a retry can't double-post, constraint races surface as `409` rather than `500`, and every timestamp is a UTC instant stored as `TIMESTAMPTZ` so each viewer sees their own local time (an early bug here: zone-less timestamps made server time display as local time).
 - **Frontend.** React + Tailwind SPA with a deliberate "ledger" visual identity — a dark UI, monospaced tabular figures for every amount so numbers align like a real ledger, and a signature lime accent reserved only for primary actions.
 
 ### Engineering practices
 
-- **Automated tests** at every layer: JUnit + Mockito service tests (the split/balance/debt-simplification logic gets the most thorough coverage, since it's the highest-value code to get right), `@DataJpaTest` repository tests against H2, and a full `@SpringBootTest` + MockMvc integration test that walks the entire register → group → expense → balance → settle → activity flow with real JWT auth.
-- **CI/CD.** GitHub Actions runs the full test suite and builds both the backend jar/Docker image and the frontend bundle on every push, so a broken build never reaches deploy.
+- **Automated tests** at every layer: JUnit + Mockito service tests (the split/balance/debt-simplification logic gets the most thorough coverage, since it's the highest-value code to get right), `@DataJpaTest` repository tests, a full `@SpringBootTest` + MockMvc flow with real JWT auth, a Testcontainers test that applies every Flyway migration to a real PostgreSQL and checks the constraints actually fire, Vitest component tests on the frontend, and a Playwright test that drives the real UI through register, invite, add expense and settle.
+- **CI/CD.** GitHub Actions runs backend tests, frontend lint and tests with coverage, the Docker build, and the browser end-to-end flow against the containerized API on every push, so a broken build never reaches deploy.
 - **Infrastructure as config, not hardcoding.** Docker + Docker Compose for a one-command local environment (backend + Postgres, no local installs needed); Flyway for versioned schema migrations instead of letting Hibernate auto-alter the schema; every secret (`JWT_SECRET`, DB credentials, CORS origins) supplied via environment variables with no working fallback baked into the code.
+- **Observability.** Health and readiness probes, an `X-Request-ID` on every response that also appears in structured JSON logs, opt-in Sentry error reporting, and OpenAPI docs.
 - **Deployed and live**, not just running locally: Railway (API + managed Postgres) and Vercel (frontend), verified end-to-end against the real deployed stack, not just `localhost`.
 
-### What I'd add next
+### Known limits and what I'd do next
 
-Recurring expenses, multi-currency support, receipt image uploads, and category breakdowns with charts are the scoped-out v2 features — held back deliberately so v1 stayed focused on the algorithmic core (splits, balances, debt simplification) rather than spreading effort across a longer feature list.
+Rate limiting and token revocation are in-memory (single instance), the JWT lives in `localStorage` rather than an `HttpOnly` cookie, and list endpoints are paged in the browser rather than the server. Next on the list: server-side pagination and CSV export, refresh tokens with cookie auth and Redis-backed throttling, settlement reversal, and an exact debt-simplification solver for small groups with the greedy heuristic as the fallback. The full list is in the README.
 
 ---
 

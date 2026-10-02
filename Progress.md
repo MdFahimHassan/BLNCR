@@ -1,7 +1,7 @@
 # BLNCR — Project Context & Progress Log
 
-## The Bigger Picture
-Building toward a full-stack developer portfolio ahead of UG graduation (~2029), with possible masters after. Goal: 2-3 deep, impactful projects rather than many shallow ones. This is project #1 of that plan.
+## About this file
+A chronological build log for BLNCR: decisions, dead ends, and the bugs hit along the way. Entries are historical, so some describe the project as it was at that phase; the [README](README.md) reflects the current state.
 
 **GitHub:** https://github.com/MdFahimHassan
 **Portfolio:** https://personal-portfolio-rho-lac-91.vercel.app/
@@ -40,7 +40,6 @@ A group expense-splitting app (Splitwise-style) — chosen because it has real a
 - **Group ID:** `dev.fahim`
 - **Artifact ID:** `blncr`
 - **Package:** `dev.fahim.blncr`
-- **Local path:** `D:\Study Material\CSE Projects\blncr`
 
 ### Entity Model (implemented)
 Located in `src/main/java/dev/fahim/blncr/entity/`:
@@ -78,7 +77,7 @@ src/main/java/dev/fahim/blncr/
 
   spring.datasource.url=jdbc:postgresql://localhost:5432/blncr
   spring.datasource.username=postgres
-  spring.datasource.password=blncr123
+  spring.datasource.password=<your-local-password>
 
   spring.jpa.hibernate.ddl-auto=update
   spring.jpa.show-sql=true

@@ -57,3 +57,7 @@ frontend/dist/
 frontend/coverage/
 frontend/test-results/
 frontend/playwright-report/
+
+# Generated demo recording (the converted docs/demo.gif is the committed asset)
+docs/demo.webm
+docs/.video-tmp/

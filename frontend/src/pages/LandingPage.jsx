@@ -37,7 +37,7 @@ const NUMBERED_FEATURES = [
     n: "01",
     icon: Percent,
     title: "Flexible splitting",
-    description: "Equal, exact-amount, or percentage splits — rounding handled in integer cents, never floats.",
+    description: "Equal, exact-amount, or percentage splits having rounding handled in integer cents, never floats.",
   },
   {
     n: "02",
@@ -49,7 +49,7 @@ const NUMBERED_FEATURES = [
     n: "03",
     icon: ShieldCheck,
     title: "Precise financial math",
-    description: "Every amount is a BigDecimal — no float/double rounding bugs in the money path, ever.",
+    description: "Every amount is a BigDecimal having no float/double rounding bugs in the money path, ever.",
   },
   {
     n: "04",
@@ -239,8 +239,8 @@ export default function LandingPage() {
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
               True minimum-transaction debt netting is NP-hard in general. BLNCR's greedy
-              largest-creditor/largest-debtor heuristic doesn't chase the theoretical optimum —
-              it gets real groups' tangled expenses down to a short, clean plan anyway.
+              largest-creditor/largest-debtor heuristic doesn't chase the theoretical optimum rather
+              gets real groups tangled expenses down to a short, clean plan anyway.
             </p>
           </div>
           <div className="lg:order-2">

@@ -18,35 +18,62 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 
 ## Demo
 
-<!--
-  Add a short screen-capture here before sharing this README with recruiters:
-  1. Record a 20–40s walkthrough (register → create group → add an expense → balances → settle up).
-  2. Convert to a GIF (e.g. `gifski` or Kap on macOS, ScreenToGif on Windows) — keep it under ~8MB.
-  3. Save it as docs/demo.gif and swap in the line below.
--->
-`docs/demo.gif` — *(record and drop the walkthrough GIF here; see comment in the README source)*
+<p align="center">
+  <img src="docs/demo.gif" alt="BLNCR walkthrough: open a group, add an expense, review balances and settle up" width="85%">
+</p>
 
-[▶ Try the live app](https://blncr-xi.vercel.app/) — fastest way to see it working end to end.
+[▶ Try the live app](https://blncr-xi.vercel.app/): fastest way to see it working end to end. If the API has been idle, the first request can be slow while the container wakes up (depends on the hosting tier).
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/02-expenses.png" alt="Group expenses with category filters and search"></td>
+    <td width="50%"><img src="docs/screenshots/03-balances.png" alt="Net balances and the suggested settle-up plan"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Expenses</b>: equal, exact and percentage splits, categories, search</sub></td>
+    <td><sub><b>Balances</b>: net position per member and a compact payment plan</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/01-dashboard.png" alt="Dashboard listing groups with the user's balance in each"></td>
+    <td align="center"><img src="docs/screenshots/06-mobile-group.png" alt="Group page on a phone" height="420"> <img src="docs/screenshots/07-mobile-add-expense.png" alt="Add-expense dialog on a phone" height="420"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Dashboard</b>: every group and your balance in it, from one API call</sub></td>
+    <td><sub><b>Mobile</b>: built phone-first, checked at 360px wide</sub></td>
+  </tr>
+</table>
 
 ## Features
 
-- **Group expense tracking** — create groups, add members, log shared expenses
-- **Flexible splitting** — equal, exact-amount, or percentage-based splits
-- **Smart balance calculation** — real-time view of who owes whom
-- **Debt simplification engine** — uses a greedy heuristic to produce a compact settle-up plan; it does not guarantee the mathematical minimum
-- **Settlement tracking** — mark debts as paid, keep a running activity history
-- **Precise financial math** — every monetary value is a `BigDecimal`, split in integer cents, never a `float`/`double`
-- **Operations-ready API** — liveness/readiness probes, request IDs, structured JSON logs, optional Sentry error tracking, and OpenAPI docs
+**Splitting and settling**
+- **Flexible splits**: equal, exact-amount, or percentage, with eight expense categories
+- **Edit and delete expenses** (by the creator or a group admin), with search, category filter and paging in the UI
+- **Balances and debt simplification**: net position per member plus a greedy heuristic that produces a compact settle-up plan; it does not guarantee the mathematical minimum
+- **Settlements and activity feed**: record a payment you were part of, and keep a running history
+- **Precise financial math**: every monetary value is a `BigDecimal`, split in integer cents, never a `float`/`double`
+- **Multi-currency groups**: pick one of 20 currencies per group
+
+**Groups and accounts**
+- **Invite links**: single-use, 7-day expiry, stored only as SHA-256 hashes (no "add anyone by email" endpoint, so no account enumeration)
+- **Roles**: owner, admin and member, with ownership transfer, member removal, leaving and group deletion
+- **Settle before you leave**: leaving, removal and account deletion are blocked while a balance is unsettled, so nobody's debt gets stranded
+- **Profile and privacy**: avatar upload (JPEG/PNG/WebP, magic-byte checked), edit profile, and account deletion that anonymizes the user while keeping group ledgers intact
+
+**Engineering**
+- **Idempotent writes**: expense creation takes an `Idempotency-Key`, so a double-click or flaky retry can't create a duplicate
+- **Correct time handling**: timestamps are UTC instants (`TIMESTAMPTZ`), shown in each viewer's local time
+- **Operations-ready API**: liveness/readiness probes, request IDs, structured JSON logs, optional Sentry error tracking, and OpenAPI docs
 
 ## Tech stack
 
 | Layer | Choices |
 |---|---|
 | **Backend** | Java 21 · Spring Boot 4.1 · Spring Security · Spring Data JPA (Hibernate 7) · Maven |
-| **Auth** | JWT (stateless, custom filter + `UserDetailsService`) |
+| **Auth** | JWT (stateless, custom filter + `UserDetailsService`), BCrypt, server-side token revocation |
 | **Database** | PostgreSQL 18 · Flyway migrations |
 | **Frontend** | React 19 · Vite · React Router 7 · Tailwind CSS v4 · Axios |
-| **Testing** | JUnit 5 · Mockito · AssertJ · `@DataJpaTest` / `@WebMvcTest` / `@SpringBootTest` (H2) |
+| **Testing** | JUnit 5 · Mockito · AssertJ · `@DataJpaTest` / `@WebMvcTest` / `@SpringBootTest` (H2) · Testcontainers (real Postgres) · Vitest + Testing Library · Playwright (end-to-end) |
+| **Observability** | Spring Actuator probes · request-ID logging · Sentry (opt-in) · springdoc OpenAPI |
 | **Infra** | Docker (multi-stage build) · Docker Compose · GitHub Actions CI · Railway (API + Postgres) · Vercel (frontend) |
 
 ## Operations and security notes
@@ -119,8 +146,47 @@ npm run dev
 
 ### Run the tests
 ```bash
-./mvnw test
+# Backend: unit, repository, MockMvc integration (H2). The Postgres migration test
+# uses Testcontainers and is skipped automatically when Docker isn't available.
+./mvnw verify
+
+# Frontend: unit/component tests and lint
+cd frontend
+npm test
+npm run lint
+
+# Browser end-to-end flow (needs the backend running, e.g. `docker compose up -d --build backend`)
+npx playwright install chromium
+npm run test:e2e
 ```
+CI runs all of the above on every push.
+
+### Regenerate the README screenshots and demo
+With the backend running, one command seeds a realistic group through the API and captures every image above:
+```bash
+cd frontend
+npx playwright test -c playwright.capture.config.js
+# writes docs/screenshots/*.png and docs/demo.webm (convert to GIF with the ffmpeg line it prints)
+```
+
+## Known limitations
+
+These are deliberate scope decisions, listed so they're not surprises:
+
+- **Debt simplification is a heuristic.** Greedy largest-creditor/largest-debtor matching is short and readable but not provably minimal; true minimum-transaction netting is NP-hard.
+- **Rate limiting and token revocation are in-memory.** They reset on restart and don't sync across replicas; a shared store (Redis) or edge limiting is needed before scaling out.
+- **The JWT lives in `localStorage`.** The strict CSP and lack of third-party scripts limit exposure, but an `HttpOnly` cookie plus CSRF protection would be stronger. Tokens last an hour and there is no refresh flow, so users sign in again after expiry.
+- **List endpoints aren't paginated server-side.** Search, filtering and paging happen in the browser, which is fine for friend-group scale but not for thousands of expenses per group.
+- **Settlements can't be undone or edited**, and overpayments aren't rejected.
+- **No password reset or email verification.** Email addresses are validated (format, disposable and reserved domains, MX lookup) but not confirmed.
+
+## What I'd do next
+
+- Server-side pagination and CSV export for expenses
+- Refresh tokens with `HttpOnly` cookies, and Redis-backed rate limiting
+- Settlement reversal, and an exact debt-simplification solver for small groups (subset-partition DP, greedy fallback for larger ones)
+- Password reset and email verification
+- Recurring expenses, receipt uploads, and category charts
 
 ## Roadmap
 
@@ -128,13 +194,12 @@ npm run dev
 - [x] Backend foundation (Spring Boot + PostgreSQL + JPA + JWT auth)
 - [x] Expense & split logic, **debt simplification algorithm**
 - [x] React frontend (Vite + Tailwind)
-- [x] Automated test suite (JUnit + Mockito + repository/integration tests)
+- [x] Automated tests at every layer (unit, repository, integration, Postgres/Testcontainers, component, browser end-to-end)
 - [x] Dockerized backend + Postgres, Flyway migrations, GitHub Actions CI
-- [x] Live deploy — Railway (backend + managed Postgres) and Vercel (frontend)
-- [x] Polish for recruiters — architecture diagram, sharp README, project write-up
-- [ ] Demo GIF embedded above *(record locally — see the comment in the README source)*
+- [x] Live deploy: Railway (backend + managed Postgres) and Vercel (frontend)
+- [x] Product depth: invites, roles, edit/delete, categories, multi-currency, profile and account deletion
+- [x] Production hygiene: health probes, request IDs, structured logs, Sentry, OpenAPI
 - [ ] Custom domain *(optional)*
-- [ ] Stretch: recurring expenses, multi-currency, receipt uploads, category charts
 
 See [`Progress.md`](Progress.md) for the full build log, and [`docs/PROJECT_WRITEUP.md`](docs/PROJECT_WRITEUP.md) for a portfolio-ready write-up of this project.
 
