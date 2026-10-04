@@ -52,7 +52,7 @@ export default function TermsPage() {
       <H2>3. What the Service does — and doesn't do</H2>
       <p>
         BLNCR lets you create groups, log shared expenses, and calculates who owes whom, including a
-        simplified "fewest payments" settlement plan.
+        simplified settlement plan.
       </p>
       <p>
         <strong className="text-[var(--color-text)]">Important:</strong> BLNCR does not move money. It

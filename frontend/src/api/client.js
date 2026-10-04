@@ -29,7 +29,7 @@ api.interceptors.response.use(
     } else if (data?.message) {
       message = data.message;
     } else if (error.message === "Network Error") {
-      message = "Can't reach the server. Is the backend running?";
+      message = "Can't reach the server. Check your connection and try again.";
     }
 
     if (error.response?.status === 401) {

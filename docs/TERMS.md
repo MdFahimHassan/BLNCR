@@ -19,7 +19,7 @@ You must be at least 13 years old (or the minimum age required in your country t
 
 ## 3. What the Service does — and doesn't do
 
-BLNCR lets you create groups, log shared expenses, and calculates who owes whom, including a simplified "fewest payments" settlement plan.
+BLNCR lets you create groups, log shared expenses, and calculates who owes whom, including a simplified settlement plan.
 
 **Important:** BLNCR does not move money. It does not process payments, hold funds, or connect to your bank or card. All "settling up" happens outside the app — BLNCR just tracks the numbers you and your group members enter. We are not responsible for whether a settlement actually gets paid in real life.
 

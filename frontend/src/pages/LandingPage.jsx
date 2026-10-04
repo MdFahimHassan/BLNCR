@@ -185,13 +185,13 @@ export default function LandingPage() {
         <div className="relative z-10 mx-auto max-w-3xl px-4 pt-16 text-center sm:px-6 sm:pt-24">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs text-[var(--color-text-faint)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
-            Minimum cash flow algorithm inside
+            Debt-simplification algorithm inside
           </div>
           <h1 className="text-4xl font-semibold tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
-            Split fairly. Settle in the <span className="text-[var(--color-accent-text)]">fewest payments</span>.
+            Split fairly. Settle in <span className="text-[var(--color-accent-text)]">fewer payments</span>.
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-[15px] leading-relaxed text-[var(--color-text-soft)]">
-            Not just who owes what, BLNCR runs a debt-simplification algorithm to find the fewest payments that settle the group.
+            Not just who owes what: BLNCR runs a debt-simplification algorithm that boils the whole group down to a short, clear payment plan.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link to="/register">
@@ -235,12 +235,12 @@ export default function LandingPage() {
           <div className="lg:order-1">
             <span className="text-xs font-medium text-[var(--color-accent-text)]">02 · Settle-up plan</span>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)] sm:text-3xl">
-              The <span className="text-[var(--color-accent-text)]">fewest</span> possible payments
+              <span className="text-[var(--color-accent-text)]">Fewer</span> payments, same result
             </h2>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-[var(--color-text-soft)]">
               True minimum-transaction debt netting is NP-hard in general. BLNCR's greedy
-              largest-creditor/largest-debtor heuristic doesn't chase the theoretical optimum rather
-              gets real groups tangled expenses down to a short, clean plan anyway.
+              largest-creditor/largest-debtor heuristic doesn't chase the theoretical optimum, but it
+              gets a real group's tangled expenses down to a short, clean plan anyway.
             </p>
           </div>
           <div className="lg:order-2">

@@ -17,7 +17,7 @@ const RAW_EDGES = [
   { d: "M314,186 Q271.4,99.2 200,34", amount: 9, left: "66.05%", top: "46.7%" }, // Charlie -> Alice
 ];
 
-// The simplified "after" state: the minimum payment plan.
+// The simplified "after" state: the reduced payment plan.
 const FINAL_EDGES = [
   { d: "M314,186 Q263.4,103.6 200,34", amount: 18, left: "65%", top: "47.7%" }, // Charlie -> Alice
   { d: "M86,186 Q135,104 200,34", amount: 7, left: "34.75%", top: "47.7%" }, // Bob -> Alice
@@ -77,7 +77,7 @@ export default function DebtGraphCollapse() {
           <span className="w-full text-[var(--color-debit-text)]">everyone owes a bit of everyone</span>
         </Crossfade>
         <Crossfade show={settled}>
-          <span className="w-full text-[var(--color-accent-text)]">→ collapsed to the minimum</span>
+          <span className="w-full text-[var(--color-accent-text)]">→ collapsed to fewer payments</span>
         </Crossfade>
       </div>
 

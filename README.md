@@ -183,7 +183,7 @@ These are deliberate scope decisions, listed so they're not surprises:
 
 - **Debt simplification is a heuristic.** Greedy largest-creditor/largest-debtor matching is short and readable but not provably minimal; true minimum-transaction netting is NP-hard.
 - **Rate limiting and token revocation are in-memory.** They reset on restart and don't sync across replicas; a shared store (Redis) or edge limiting is needed before scaling out.
-- **The JWT lives in `localStorage`.** The strict CSP and lack of third-party scripts limit exposure, but an `HttpOnly` cookie plus CSRF protection would be stronger. Tokens last an hour and there is no refresh flow, so users sign in again after expiry.
+- **The JWT lives in `localStorage`.** The strict CSP and lack of third-party scripts limit exposure, but an `HttpOnly` cookie plus CSRF protection would be stronger. Tokens last 24 hours and there is no refresh flow, so users sign in again after expiry.
 - **List endpoints aren't paginated server-side.** Search, filtering and paging happen in the browser, which is fine for friend-group scale but not for thousands of expenses per group.
 - **Settlements can't be undone or edited**, and overpayments aren't rejected.
 - **No password reset or email verification.** Email addresses are validated (format, disposable and reserved domains, MX lookup) but not confirmed.
@@ -209,7 +209,7 @@ These are deliberate scope decisions, listed so they're not surprises:
 - [x] Production hygiene: health probes, request IDs, structured logs, Sentry, OpenAPI
 - [ ] Custom domain *(optional)*
 
-See [`Progress.md`](Progress.md) for the full build log, and [`docs/PROJECT_WRITEUP.md`](docs/PROJECT_WRITEUP.md) for a portfolio-ready write-up of this project.
+See [`docs/PROJECT_WRITEUP.md`](docs/PROJECT_WRITEUP.md) for a portfolio-ready write-up of this project.
 
 ## License
 

@@ -47,7 +47,3 @@ I wanted a first portfolio project with genuine algorithmic depth rather than an
 ### Known limits and what I'd do next
 
 Rate limiting and token revocation are in-memory (single instance), the JWT lives in `localStorage` rather than an `HttpOnly` cookie, and list endpoints are paged in the browser rather than the server. Next on the list: server-side pagination and CSV export, refresh tokens with cookie auth and Redis-backed throttling, settlement reversal, and an exact debt-simplification solver for small groups with the greedy heuristic as the fallback. The full list is in the README.
-
----
-
-*Full build log, including the real deployment bugs hit and fixed along the way (a Spring Boot 4 Flyway auto-configuration gotcha, a committed `node_modules` breaking the Vercel build, and a Vercel env-var type mistake), is in [`Progress.md`](../Progress.md) in the repo.*
