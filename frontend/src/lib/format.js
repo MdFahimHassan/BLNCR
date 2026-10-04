@@ -1,6 +1,6 @@
 import { currencyInfo, DEFAULT_CURRENCY } from "./currencies";
 
-// Building an Intl.NumberFormat is relatively expensive, so keep one per currency.
+// One Intl.NumberFormat per currency; constructing them is expensive.
 const formatters = new Map();
 
 function getFormatter(currency) {

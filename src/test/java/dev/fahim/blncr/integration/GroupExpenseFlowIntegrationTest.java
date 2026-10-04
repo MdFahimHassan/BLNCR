@@ -31,14 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Full end-to-end walkthrough of the app's core loop, run against the real Spring context, the
- * real JWT filter chain, and an in-memory H2 database: register two users, form a group, add an
- * expense, check the computed balances and settle-up suggestion (the debt-simplification
- * algorithm's output), record the settlement, and confirm it shows up in the activity feed.
- * <p>
- * This is deliberately one long ordered flow rather than isolated tests, because the whole point
- * is to prove the layers (controller -> service -> repository -> DB, plus JWT auth) integrate
- * correctly together — the individual pieces already have focused unit tests elsewhere.
+ * End-to-end core loop against the real Spring context, JWT filter chain and in-memory H2:
+ * register, group, invite, expense, balances, settle-up, settlement, activity feed. One ordered flow on purpose.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc

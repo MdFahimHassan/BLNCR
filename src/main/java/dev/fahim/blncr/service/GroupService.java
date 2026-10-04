@@ -50,7 +50,6 @@ public class GroupService {
                 .build();
         Group saved = groupRepository.save(group);
 
-        // The creator is automatically the first member of their own group.
         GroupMember membership = GroupMember.builder()
                 .group(saved)
                 .user(creator)

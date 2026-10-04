@@ -93,8 +93,6 @@ class GroupManagementServiceTest {
         return GroupMember.builder().group(group).user(user).role(role).joinedAt(Instant.now()).build();
     }
 
-    // ---- leaving ----
-
     @Test
     @DisplayName("leaving is blocked while you owe money")
     void leaveBlockedWhenInDebt() {
@@ -157,8 +155,6 @@ class GroupManagementServiceTest {
                 .hasMessageContaining("Transfer ownership");
     }
 
-    // ---- removing ----
-
     @Test
     @DisplayName("removing a member is blocked while they have an unsettled balance")
     void removeBlockedWhenTargetUnsettled() {
@@ -192,8 +188,6 @@ class GroupManagementServiceTest {
         verify(groupMemberRepository).save(target);
     }
 
-    // ---- account deletion ----
-
     @Test
     @DisplayName("deleting an account is blocked while a group balance is unsettled")
     void accountDeletionBlockedWhenUnsettled() {
@@ -220,8 +214,6 @@ class GroupManagementServiceTest {
         assertThat(membership.getLeftAt()).isNotNull();
         verify(invitationRepository).deleteByCreatedById(BOB_ID);
     }
-
-    // ---- invitations ----
 
     @Test
     @DisplayName("accepting an invitation reads it with a row lock so a single-use link can't be used twice at once")

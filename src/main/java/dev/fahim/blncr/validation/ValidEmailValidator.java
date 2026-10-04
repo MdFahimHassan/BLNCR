@@ -31,10 +31,7 @@ public class ValidEmailValidator implements ConstraintValidator<ValidEmail, Stri
     private static final int MAX_LENGTH = 254;
     private static final int MAX_LOCAL_LENGTH = 64;
 
-    /**
-     * Dot-atom local part, then one or more DNS labels, then a TLD that is either letters only
-     * (2-24) or an IDN punycode TLD (xn--...). Rejects "a@b", "a@b.c", "a..b@x.com", "a@-x.com".
-     */
+    /** Dot-atom local part, DNS labels, then a letters-only (2-24) or punycode TLD. */
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*"
                     + "@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+"
@@ -57,11 +54,7 @@ public class ValidEmailValidator implements ConstraintValidator<ValidEmail, Stri
     private static final ConcurrentHashMap<String, CachedResult> DNS_CACHE = new ConcurrentHashMap<>();
     private static final AtomicBoolean DNS_UNAVAILABLE_LOGGED = new AtomicBoolean(false);
 
-    /**
-     * Set app.email.mx-check=false (env EMAIL_MX_CHECK=false) to skip the DNS lookup, e.g. in
-     * unit tests or an offline dev machine. Syntax and reserved-domain checks always run.
-     * Injected by Spring's constraint validator factory; defaults to enabled.
-     */
+    /** app.email.mx-check=false skips the DNS lookup (offline dev, unit tests). Syntax and reserved-domain checks always run. */
     @Value("${app.email.mx-check:true}")
     private boolean mxCheckEnabled = true;
 
@@ -71,7 +64,7 @@ public class ValidEmailValidator implements ConstraintValidator<ValidEmail, Stri
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        // null/blank is @NotBlank's job - this constraint only judges non-empty input.
+        // null/blank is handled by @NotBlank.
         if (value == null || value.isEmpty()) {
             return true;
         }
@@ -120,12 +113,7 @@ public class ValidEmailValidator implements ConstraintValidator<ValidEmail, Stri
         return ok;
     }
 
-    /**
-     * true  = domain has a usable MX (or, lacking MX, an A/AAAA record) - or we could not tell.
-     * false = the domain does not exist, or publishes a "null MX" (explicitly accepts no mail).
-     * Inconclusive DNS failures (timeouts, resolver down, DNS module missing) fail OPEN so a
-     * resolver hiccup never blocks legitimate sign-ups.
-     */
+    /** False if the domain doesn't exist or publishes a null MX. Inconclusive DNS failures fail open, so a resolver hiccup never blocks sign-ups. */
     private static boolean lookupDomain(String domain) {
         Hashtable<String, String> env = new Hashtable<>();
         env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.dns.DnsContextFactory");
@@ -142,14 +130,14 @@ public class ValidEmailValidator implements ConstraintValidator<ValidEmail, Stri
                 NamingEnumeration<?> records = mx.getAll();
                 while (records.hasMore()) {
                     String record = String.valueOf(records.next()).trim();
-                    // "0 ." is a null MX (RFC 7505): the domain says it never receives email.
+                    // "0 ." is a null MX (RFC 7505): the domain accepts no mail.
                     if (!record.endsWith(" .") && !record.equals(".")) {
                         hasRealMx = true;
                     }
                 }
                 return hasRealMx;
             }
-            // No MX records: RFC 5321 says fall back to the domain's own A/AAAA record.
+            // No MX: fall back to the domain's A/AAAA record (RFC 5321).
             try {
                 InetAddress.getByName(domain);
                 return true;
@@ -169,7 +157,7 @@ public class ValidEmailValidator implements ConstraintValidator<ValidEmail, Stri
                 try {
                     ctx.close();
                 } catch (NamingException ignored) {
-                    // nothing useful to do
+                    // ignored: closing the DNS context is best effort
                 }
             }
         }

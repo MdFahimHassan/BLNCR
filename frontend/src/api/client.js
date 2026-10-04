@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// Base URL comes from an env var so it's trivial to point at a deployed
-// backend later (Phase 6) without touching code.
+// API base URL comes from VITE_API_BASE_URL.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:9090";
 export const AUTH_EXPIRED_EVENT = "blncr:auth-expired";
 
@@ -18,8 +17,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Normalizes backend ApiError { timestamp, status, error, message, details }
-// into a single readable string, and force-logs-out on 401 (expired/invalid token).
+// Normalizes the backend ApiError into one readable message and force-logs-out on 401.
 api.interceptors.response.use(
   (response) => response,
   (error) => {

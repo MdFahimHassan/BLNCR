@@ -12,11 +12,7 @@ import java.util.Optional;
 public interface GroupInvitationRepository extends JpaRepository<GroupInvitation, Long> {
     Optional<GroupInvitation> findByTokenHash(String tokenHash);
 
-    /**
-     * Loads the invitation with a row lock (SELECT ... FOR UPDATE). Used when accepting, so two
-     * people opening the same single-use link at the same moment are processed one after the
-     * other: the second sees {@code acceptedAt} already set instead of also getting in.
-     */
+    /** Row-locked load (SELECT ... FOR UPDATE) so concurrent accepts of a single-use link are serialized. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from GroupInvitation i where i.tokenHash = :tokenHash")
     Optional<GroupInvitation> findByTokenHashForUpdate(@Param("tokenHash") String tokenHash);

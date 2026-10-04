@@ -180,7 +180,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero — centered, Ventrix-inspired card arc */}
+      {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="relative z-10 mx-auto max-w-3xl px-4 pt-16 text-center sm:px-6 sm:pt-24">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs text-[var(--color-text-faint)]">

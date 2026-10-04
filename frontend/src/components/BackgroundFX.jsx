@@ -1,10 +1,5 @@
 import { useMemo } from "react";
 
-// Builds one mirrored group of curved diagonal paths, following the same
-// curve-generation shape as the reference "Background Paths" component,
-// but at a fraction of the path count (8 vs 36) since motion here comes
-// from a CSS stroke-dashoffset animation rather than re-animating each
-// path's geometry every frame.
 function buildPaths(position, count) {
   return Array.from({ length: count }, (_, i) => {
     const d = `M-${380 - i * 16 * position} -${189 + i * 22}C-${
@@ -19,17 +14,8 @@ function buildPaths(position, count) {
 }
 
 /**
- * Fixed full-viewport decorative background: two mirrored groups of solid
- * hairlines that continuously draw themselves out and retract — the same
- * "growing line" motion as the reference's pathLength 0.3→1 loop, done via
- * the SVG `pathLength` normalization trick (each path reports its length
- * as exactly 100 units, so stroke-dashoffset can animate 0–100 without
- * measuring real curve length in JS). One accent-tinted path per group nods
- * to the brand color without breaking the "lime reserved for focal
- * highlights" rule; the rest sit in the neutral text-faint tone.
- *
- * Pure CSS animation, no JS per-frame work, respects prefers-reduced-motion
- * via the global override in index.css.
+ * Fixed full-viewport decorative background of self-drawing hairlines. SVG pathLength normalization
+ * (each path is 100 units) lets a pure CSS stroke-dashoffset animation run without measuring in JS.
  */
 export default function BackgroundFX() {
   const groupA = useMemo(() => buildPaths(1, 8), []);

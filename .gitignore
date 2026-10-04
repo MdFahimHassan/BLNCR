@@ -32,10 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
-### Docker / secrets (Phase 6) ###
+### Docker / secrets ###
 # Real env files with secrets are never committed — only the .env.example templates are.
-# (This used to re-include frontend/.env, which meant that file was tracked. Removed: every
-# .env, at any depth, is now ignored. Copy frontend/.env.example to frontend/.env locally.)
+# Every .env at any depth is ignored; copy frontend/.env.example to frontend/.env locally.
 .env
 .env.*
 !.env.example

@@ -5,10 +5,7 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 
-/**
- * A user's net position in a group. Positive {@code netBalance} means the group owes them
- * money overall (net creditor); negative means they owe the group money overall (net debtor).
- */
+/** Positive netBalance: the group owes this user. Negative: this user owes the group. */
 @Builder
 public record BalanceResponse(
         Long userId,

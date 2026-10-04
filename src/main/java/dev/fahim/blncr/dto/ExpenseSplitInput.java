@@ -8,16 +8,9 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
- * One participant's entry in a split.
- * <p>
- * {@code value} is interpreted based on the expense's {@code splitType}:
- * <ul>
- *     <li>EQUAL — ignored; only {@code userId} matters (the set of people splitting the bill)</li>
- *     <li>EXACT — the exact amount this user owes; all values must sum to the expense total</li>
- *     <li>PERCENTAGE — the percentage this user owes; all values must sum to 100</li>
- * </ul>
- * Bounds keep absurd values (huge magnitudes / thousands of decimals) from reaching the
- * BigDecimal arithmetic in SplitCalculator.
+ * One participant's entry in a split. {@code value} depends on the split type: ignored for EQUAL,
+ * the exact amount owed for EXACT, the percentage owed for PERCENTAGE. Bounds keep absurd values out of
+ * the BigDecimal math in SplitCalculator.
  */
 public record ExpenseSplitInput(
 

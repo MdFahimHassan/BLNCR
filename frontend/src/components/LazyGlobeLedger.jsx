@@ -1,17 +1,9 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
-// cobe (WebGL globe renderer) is a real chunk of JS that has zero business
-// being in the initial "/" bundle — it's the third section down the page.
-// React.lazy() alone only defers *rendering*, not the network fetch: with
-// GlobeLedger sitting in the JSX tree unconditionally, React would still
-// kick off the import() the moment this component mounts, which for a page
-// that mounts everything on load is effectively immediately. Gating the
-// import itself behind IntersectionObserver means the chunk isn't even
-// requested until the user has scrolled within ~400px of it.
+// cobe is a large chunk, so the import() is gated behind an IntersectionObserver and only fetched near the viewport.
 const GlobeLedger = lazy(() => import("./GlobeLedger"));
 
-// Same footprint GlobeLedger renders at (aspect-square, max 380px) — reserved
-// up front so there's no layout shift when the real thing mounts in.
+// Same footprint as GlobeLedger, reserved to avoid layout shift.
 function GlobePlaceholder() {
   return (
     <div
@@ -31,8 +23,7 @@ export default function LazyGlobeLedger(props) {
     const node = containerRef.current;
     if (!node) return;
 
-    // IntersectionObserver support is universal in evergreen browsers; on the
-    // rare browser without it, just load eagerly rather than never loading.
+    // No IntersectionObserver: load eagerly.
     if (typeof IntersectionObserver === "undefined") {
       setShouldLoad(true);
       return;

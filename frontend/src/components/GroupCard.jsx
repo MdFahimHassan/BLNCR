@@ -33,10 +33,7 @@ export default function GroupCard({ group, balance }) {
 }
 
 function GroupBalance({ balance, currency }) {
-  // Still loading, or the balances call for this one group failed — either
-  // way there's nothing honest to show, so stay quiet rather than guess.
-  // A skeleton (not a spinner) because this card already rendered with real
-  // content; only this one figure is pending.
+  // Loading, or this group's balances call failed: show a skeleton, or nothing on error.
   if (!balance) {
     return <div className="h-4 w-16 animate-pulse rounded-full bg-[var(--color-surface-3)]" />;
   }

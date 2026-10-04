@@ -6,8 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record LoginRequest(
 
-        // Deliberately the lenient @Email (not @ValidEmail): login must keep working for any
-        // account that already exists, and it must not trigger DNS lookups on every attempt.
+        // Lenient @Email on purpose: existing accounts must still log in, with no DNS lookup per attempt.
         @NotBlank(message = "Email is required")
         @Email(message = "Email must be valid")
         @Size(max = 254, message = "Email must be at most 254 characters")

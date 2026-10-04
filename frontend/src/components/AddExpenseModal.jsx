@@ -44,7 +44,7 @@ export default function AddExpenseModal({
   const [loading, setLoading] = useState(false);
   const submissionRef = useRef({ signature: null, key: null });
 
-  // Reset the form each time the modal is opened for a clean slate.
+  // Reset the form each time the modal opens.
   useEffect(() => {
     if (open) {
       setDescription(expenseToEdit?.description ?? "");

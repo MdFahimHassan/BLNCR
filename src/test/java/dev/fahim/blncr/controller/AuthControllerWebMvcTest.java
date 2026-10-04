@@ -26,11 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Controller-slice test: real Spring MVC dispatch + bean validation + {@code GlobalExceptionHandler},
- * with the service layer mocked out and the security filter chain disabled ({@code addFilters =
- * false}) since {@code /api/auth/**} is permitAll anyway and this slice's job is to check HTTP
- * status codes and response shape, not auth. {@code GroupExpenseFlowIntegrationTest} exercises
- * the real, fully-authenticated stack instead.
+ * Controller-slice test: MVC dispatch, bean validation and GlobalExceptionHandler, with a mocked service layer
+ * and the security filters disabled (/api/auth/** is permitAll anyway).
  */
 @WebMvcTest(controllers = AuthController.class, properties = "app.email.mx-check=false")
 @AutoConfigureMockMvc(addFilters = false)

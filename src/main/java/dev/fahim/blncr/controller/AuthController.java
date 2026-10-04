@@ -29,7 +29,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /** Revokes the caller's token server-side so it can't be reused after logout. */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @RequestHeader(value = "Authorization", required = false) String authorization

@@ -9,10 +9,8 @@ services:
       # No default: compose refuses to start until DB_PASSWORD is set in .env.
       POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in your .env file (see .env.example)}
     ports:
-      # Bound to localhost only. The old "5432:5432" published the database on ALL network
-      # interfaces (0.0.0.0), exposing it to anyone who can reach the host. The backend talks to
-      # it over the internal Docker network and doesn't need this port at all; it is kept on
-      # 127.0.0.1 purely so you can connect a local DB client. Delete it entirely in production.
+      # Bound to localhost only, for a local DB client. The backend uses the internal Docker network,
+      # so remove this port mapping entirely in production.
       - "127.0.0.1:5432:5432"
     volumes:
       - blncr-db-data:/var/lib/postgresql

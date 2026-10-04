@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
-/* Self-hosted variable fonts — Geist Sans for UI/text, Geist Mono for every monetary
-   figure in the app (ledger convention: numbers are always set in mono w/ tabular nums
-   so amounts align in columns and read as precise, not decorative). */
+/* Self-hosted variable fonts: Geist Sans for UI text, Geist Mono (tabular nums) for every monetary figure. */
 @import "@fontsource/geist-sans/400.css";
 @import "@fontsource/geist-sans/500.css";
 @import "@fontsource/geist-sans/600.css";
@@ -15,7 +13,7 @@
   --font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
 
-  /* Base — cool near-black, not a warm/AI-purple default */
+  /* Base */
   --color-base: #0a0b0d;
   --color-base-raised: #0e1013;
 
@@ -47,14 +45,7 @@
   --color-debit-core: #ffd3da;
   --color-accent-core: #f4ffb8;
 
-  /* -text variants: same hue as their bg/icon counterpart, but this is the
-     one that gets used for plain body/heading text set directly on a page
-     or card surface. Kept as separate tokens (rather than reusing
-     --color-accent/-credit/-debit everywhere) because a color tuned to look
-     vivid as a button fill or badge chip is a completely different, and
-     often opposite, contrast requirement from that same color set as text —
-     in dark mode both happen to be the same hue/lightness, so these default
-     to identical values; the light theme below is where they diverge. */
+  /* -text variants: accent/credit/debit tuned for use as text. Identical in dark mode; the light theme darkens them for legibility. */
   --color-accent-text: var(--color-accent);
   --color-credit-text: var(--color-credit);
   --color-debit-text: var(--color-debit);
@@ -62,9 +53,7 @@
   --radius-card: 0.7rem;
   --radius-control: 0.55rem;
 
-  /* Custom easing for entrances and press feedback — a fast-out, gentle-settle curve reads
-     as more considered than the default linear/ease-out utility across modals, toasts and
-     buttons alike. */
+  /* Custom easing for entrances and press feedback (fast-out, gentle-settle). */
   --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -72,17 +61,8 @@ html {
   color-scheme: dark;
 }
 
-/* Light theme — every value here is a deliberate inversion of its dark
-   counterpart above, not just "make the background white." A handful of
-   dark-mode colors (--color-accent/-credit/-debit, used as button fills,
-   badge chips and icon glyphs) stay exactly as-is, because a bright lime
-   or rose reads fine as a small colored chip on either a black or a white
-   page. The -text variants exist for exactly the opposite case: that same
-   bright lime/green/rose set as bare text directly on the page background
-   has plenty of contrast on near-black, but is nearly unreadable on a light
-   surface, so this block darkens those three specifically for legibility.
-   Everything else (surfaces, borders, base text) is inverted in lightness
-   so nothing that depended on a dark backdrop goes invisible. */
+/* Light theme: surfaces, borders and base text are inverted. Accent/credit/debit stay as-is for fills and chips,
+   while the -text variants are darkened for legibility on light surfaces. */
 html.light {
   color-scheme: light;
 
@@ -125,9 +105,7 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Inline chip for technical terms called out inside feature copy
-   (e.g. "BigDecimal", "integer cents") — makes the specificity that
-   backs up the engineering claims visually stand out from body text. */
+/* Inline chip for technical terms called out inside feature copy (e.g. "BigDecimal"). */
 .feature-code {
   font-family: var(--font-mono);
   font-size: 0.85em;
@@ -139,12 +117,8 @@ body {
   white-space: nowrap;
 }
 
-/* Flowing background lines (BackgroundFX) — with pathLength={100} set on
-   each <path>, stroke-dasharray/dashoffset can work in normalized 0-100
-   units regardless of the curve's real geometric length. A single dash
-   the full length of the path, animated from mostly-hidden to fully-drawn
-   and back, reproduces the reference's pathLength 0.3->1 "growing line"
-   motion without needing to measure each path in JS. */
+/* Flowing background lines (BackgroundFX): pathLength={100} on each <path> normalizes dash units to 0-100,
+   so one dash animated via stroke-dashoffset draws and retracts the line without measuring it in JS. */
 .blncr-line {
   stroke-dasharray: 100 100;
   animation-name: blncr-line-draw;
@@ -172,12 +146,8 @@ body {
   border-radius: 4px;
 }
 
-/* Theme toggle — circular reveal driven by the View Transitions API.
-   Both snapshots' default cross-fade is switched off so the only motion
-   is the clip-path circle we animate by hand (see ThemeContext), which
-   always applies to the incoming (new) state while the outgoing state
-   sits underneath, unclipped. Unsupported browsers never enter this code
-   path at all — see the feature check in ThemeContext. */
+/* Theme toggle: circular reveal via the View Transitions API. The default cross-fade is disabled so the only
+   motion is the clip-path circle animated in ThemeContext. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -190,14 +160,8 @@ body {
   z-index: 2;
 }
 
-/* For the ~half-second the circle reveal is playing, drop the two costliest
-   ongoing effects on the page: the header's backdrop-blur (rasterizing a
-   blurred backdrop is what the view-transition snapshot step spends most of
-   its time on — a well-known cost on both Chromium and WebKit, worse on
-   phones) and the BackgroundFX line animation (continuous stroke-dashoffset
-   repaints competing with the transition's own compositor work). Neither is
-   visible for a few hundred ms, and removing them is what turns this from a
-   janky freeze into an actually smooth wipe. */
+/* While the circle reveal plays, drop the two costliest effects (header backdrop-blur, BackgroundFX animation)
+   to keep the transition smooth. */
 html.vt-transitioning .backdrop-blur-sm {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;

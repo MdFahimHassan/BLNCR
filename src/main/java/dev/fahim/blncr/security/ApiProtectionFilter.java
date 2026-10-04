@@ -14,20 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Two cheap, dependency-free protections that run before authentication:
- * <ol>
- *   <li><b>Brute-force throttling</b> on {@code POST /api/auth/login} and {@code /api/auth/register}
- *       (per client IP, fixed one-minute window) -> HTTP 429 with {@code Retry-After}.</li>
- *   <li><b>Request-size cap</b>: any request that declares a body larger than the limit is
- *       rejected with HTTP 413 before it is parsed.</li>
- * </ol>
- * Deliberately NOT a Spring bean: it is constructed and added to the security chain explicitly
- * in {@code SecurityConfig}, so it can never be auto-registered a second time as a servlet filter.
- * <p>
- * Limits of this design (worth knowing): counters are in memory, so they are per-instance and
- * reset on restart; the Content-Length check can't see chunked bodies; and it throttles by IP
- * only, so a botnet spread over many IPs is not stopped. Put a WAF / CDN (Cloudflare, etc.) in
- * front for that.
+ * Per-IP login/register throttling (429 + Retry-After) and a request-size cap (413), run before authentication.
+ * Not a Spring bean: SecurityConfig adds it explicitly so it can't be auto-registered twice as a servlet filter.
+ * Counters are in memory (per instance, reset on restart), the size check can't see chunked bodies, and throttling
+ * is per IP only, so put a WAF/CDN in front for distributed abuse.
  */
 public class ApiProtectionFilter extends OncePerRequestFilter {
 
@@ -135,7 +125,7 @@ public class ApiProtectionFilter extends OncePerRequestFilter {
         if (retryAfterSeconds != null) {
             response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
         }
-        // Same shape as ApiError so the frontend's error handling works unchanged.
+        // Same shape as ApiError.
         String body = "{\"timestamp\":\"" + Instant.now() + "\",\"status\":" + status
                 + ",\"error\":\"" + error + "\",\"message\":\"" + message + "\",\"details\":[]}";
         response.getWriter().write(body);

@@ -2,10 +2,7 @@ package dev.fahim.blncr.validation;
 
 import java.util.Set;
 
-/**
- * The currencies a group can be created with. Amounts are stored as NUMERIC(19,2)
- * regardless of currency, so every amount is handled with 2 decimal places.
- */
+/** Currencies a group can use; all amounts are stored as NUMERIC(19,2). */
 public final class SupportedCurrencies {
 
     public static final String DEFAULT = "USD";

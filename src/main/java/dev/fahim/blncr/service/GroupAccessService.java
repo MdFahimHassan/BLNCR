@@ -14,10 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Small shared helper for the group-scoped services (expenses, balances, settlements, activity)
- * so each of them doesn't have to re-implement "does this group exist" / "is this user in it".
- */
 @Service
 @RequiredArgsConstructor
 public class GroupAccessService {

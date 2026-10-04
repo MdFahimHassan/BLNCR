@@ -23,15 +23,10 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class AuthService {
 
-    /** BCrypt silently ignores everything past 72 bytes, so refuse longer passwords outright. */
+    /** BCrypt ignores bytes past 72, so longer passwords are refused. */
     private static final int BCRYPT_MAX_PASSWORD_BYTES = 72;
 
-    /**
-     * A real BCrypt hash (cost 10, same as BCryptPasswordEncoder's default) of a random value
-     * nobody knows. When a login names an email that doesn't exist we still run a full BCrypt
-     * comparison against this, so "unknown email" and "wrong password" take the same time and
-     * an attacker can't use response timing to discover which emails are registered.
-     */
+    /** Compared against when the email is unknown, so login timing doesn't reveal which emails are registered. */
     private static final String DUMMY_PASSWORD_HASH =
             "$2b$10$lL8VZJ0NuX0FsttGzwwgmueTzoGSViFfUThi9PTPce0TZlYHL1kUy";
 
@@ -64,8 +59,7 @@ public class AuthService {
         try {
             saved = userRepository.save(user);
         } catch (DataIntegrityViolationException e) {
-            // Two simultaneous registrations passed existsByEmail; the DB unique constraint
-            // caught the loser. Report it as the normal "already exists" case, not a 500.
+            // Lost the unique-constraint race against a concurrent registration.
             throw new EmailAlreadyInUseException(normalizedEmail);
         }
         String token = jwtService.generateToken(new UserPrincipal(saved));
@@ -78,7 +72,7 @@ public class AuthService {
 
         User user = userRepository.findByEmail(normalizedEmail).orElse(null);
         if (user == null) {
-            passwordEncoder.matches(request.password(), DUMMY_PASSWORD_HASH); // equalize timing
+            passwordEncoder.matches(request.password(), DUMMY_PASSWORD_HASH);
             throw new InvalidCredentialsException();
         }
 
@@ -91,11 +85,7 @@ public class AuthService {
         return AuthResponse.of(token, user.getId(), user.getName(), user.getEmail());
     }
 
-    /**
-     * Revokes the bearer token from the Authorization header so it stops working immediately.
-     * Deliberately silent for missing/invalid/expired tokens: logging out is always "successful"
-     * from the caller's point of view, and there's nothing to revoke in those cases.
-     */
+    /** Revokes the bearer token. Silent for missing, invalid or expired tokens. */
     public void logout(String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
             return;
@@ -103,7 +93,6 @@ public class AuthService {
         try {
             jwtService.revoke(authorizationHeader.substring(BEARER_PREFIX.length()));
         } catch (RuntimeException ignored) {
-            // Invalid or already-expired token: nothing to revoke.
         }
     }
 }

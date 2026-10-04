@@ -36,9 +36,7 @@ public class SettlementService {
             throw new InvalidRequestException("A settlement must be between two different users");
         }
 
-        // Authorization, not just authentication: being in the group is not enough. Without this
-        // rule any member could record "Bob paid Alice" between two OTHER people and silently
-        // wipe out a debt that was never paid. You may only record a payment you're a party to.
+        // A member may only record a payment they are a party to.
         if (!requesterId.equals(request.fromUserId()) && !requesterId.equals(request.toUserId())) {
             throw new ForbiddenActionException("You can only record settlements that you are a part of");
         }

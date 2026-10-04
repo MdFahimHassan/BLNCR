@@ -1,6 +1,4 @@
-// Sets the light/dark class before first paint, so there's never a flash of the wrong theme
-// while React boots. Mirrors the stored-preference-then-system-preference logic ThemeContext
-// uses after mount.
+// Sets the light/dark class before first paint to avoid a flash; mirrors ThemeContext's preference logic.
 (function () {
   try {
     var stored = localStorage.getItem("blncr_theme");

@@ -56,7 +56,6 @@ class GroupAccessServiceTest {
         when(groupMemberRepository.existsByGroupIdAndUserIdAndLeftAtIsNull(1L, 100L)).thenReturn(true);
 
         groupAccessService.requireMembership(1L, 100L);
-        // no exception -> pass
     }
 
     @Test

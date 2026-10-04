@@ -3,10 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-// LandingPage stays a static import: it's the "/" entry point and must not
-// wait on an extra chunk fetch. Everything past it is behind a login/register
-// action or an authenticated route, so it's safe (and much lighter for the
-// marketing page) to split into its own chunk, fetched only when needed.
+// LandingPage is a static import so "/" never waits on a chunk; everything else is lazy-loaded.
 import LandingPage from "./pages/LandingPage";
 
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -17,8 +14,7 @@ const InviteAcceptPage = lazy(() => import("./pages/InviteAcceptPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 
-// Minimal, layout-neutral fallback — avoids shipping a spinner component
-// into the landing page's bundle just to cover a ~100-200ms chunk fetch.
+// Minimal fallback, to keep a spinner component out of the landing bundle.
 function RouteFallback() {
   return (
     <div
@@ -28,8 +24,7 @@ function RouteFallback() {
   );
 }
 
-// "/" is the public, recruiter-facing marketing page. A logged-in user
-// bookmarking or landing on "/" is sent straight to their dashboard instead.
+// Signed-in users who land on "/" go straight to their dashboard.
 function RootRoute() {
   const { user } = useAuth();
   if (user) return <Navigate to="/dashboard" replace />;

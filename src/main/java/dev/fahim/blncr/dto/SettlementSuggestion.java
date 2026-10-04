@@ -5,11 +5,6 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 
-/**
- * One transaction in the simplified settle-up plan: {@code fromUser} should pay
- * {@code toUser} the given {@code amount} to help zero out the group's debts using
- * the fewest possible transactions.
- */
 @Builder
 public record SettlementSuggestion(
         Long fromUserId,

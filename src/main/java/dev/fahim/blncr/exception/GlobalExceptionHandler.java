@@ -29,9 +29,7 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage()));
     }
 
-    // A database constraint (e.g. the unique expense idempotency key) rejected a write, usually
-    // because two identical requests raced. 409 tells the client to refresh/retry; retrying a POST
-    // with the same Idempotency-Key then returns the already-saved expense.
+    // A DB constraint rejected the write (e.g. a racing duplicate expense). 409 tells the client to refresh or retry.
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex) {
         log.warn("Data integrity violation", ex);
@@ -80,8 +78,6 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(HttpStatus.BAD_REQUEST.value(), "Validation Failed", "Request is invalid"));
     }
 
-    // Malformed JSON, wrong types in the body, unknown enum values, etc. Previously these fell
-    // through to the catch-all below and were reported as 500s, which is wrong and noisy.
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleUnreadableBody(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -114,8 +110,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex) {
-        // Full detail goes to the server log only; the client gets a generic message so stack
-        // traces, SQL, and class names never leak.
+        // Details go to the server log only; the client gets a generic message.
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiError.of(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error",

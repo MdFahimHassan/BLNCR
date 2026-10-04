@@ -20,14 +20,8 @@ public class JwtService {
     private final long expirationMs;
 
     /**
-     * Server-side denylist of revoked tokens, keyed by the token's unique id (jti) with the
-     * token's own expiry as the value, so entries can be dropped as soon as the token would
-     * have died anyway. This is what makes "log out" actually invalidate a token instead of
-     * just deleting it from the browser.
-     * <p>
-     * It lives in memory: fine for a single instance, but it is cleared on restart and is not
-     * shared between instances. With the short token lifetime that's a small window; for a
-     * multi-instance deployment move this to Redis or a database table.
+     * Revoked-token denylist keyed by jti, valued by token expiry so entries can be dropped.
+     * In memory: cleared on restart and not shared between instances (use Redis or a table for multi-instance deployments).
      */
     private final Map<String, Long> revokedTokenIds = new ConcurrentHashMap<>();
 
@@ -69,11 +63,7 @@ public class JwtService {
         return parseClaims(token).getSubject();
     }
 
-    /**
-     * A token is valid only if: the signature checks out, it has not expired, it carries a jti
-     * (tokens minted before revocation existed do not, so they are refused and the user simply
-     * logs in again), it has not been revoked, and it belongs to the given user.
-     */
+    /** Valid only if the signature checks out, it is unexpired, carries a jti, is not revoked, and belongs to the user. */
     public boolean isTokenValid(String token, UserPrincipal principal) {
         Claims claims = parseClaims(token); // throws on bad signature / malformed / expired
         String jti = claims.getId();
@@ -87,7 +77,6 @@ public class JwtService {
         return principal.getEmail().equals(claims.getSubject());
     }
 
-    /** Revokes a token so it is rejected from now on. Throws if the token is invalid/expired. */
     public void revoke(String token) {
         Claims claims = parseClaims(token);
         String jti = claims.getId();

@@ -141,9 +141,6 @@ class BalanceServiceTest {
     void debtSimplificationMinimizesTransactions() {
         mockMembers(alice, bob, carol);
 
-        // Alice paid 90 (split equally 3 ways: everyone owes 30) -> Alice net +60
-        // Bob paid 30 (split equally 3 ways) -> Bob net +20, Carol net -20, Alice net -10 (from this expense)
-        // Net overall: Alice +50, Bob -10... let's use a cleaner, hand-verifiable scenario instead:
         // Alice paid 60 total, split equally among all 3 -> Alice +40, Bob -20, Carol -20.
         Expense expense = expense(1L, alice, new BigDecimal("60.00"));
         when(expenseRepository.findByGroupId(GROUP_ID)).thenReturn(List.of(expense));

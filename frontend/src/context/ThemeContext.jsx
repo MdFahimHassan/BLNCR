@@ -7,8 +7,7 @@ const THEME_COLOR = { dark: "#0a0b0d", light: "#faf9f6" };
 
 function getInitialTheme() {
   if (typeof document === "undefined") return "dark";
-  // index.html's inline script already set this class pre-paint — read it
-  // back rather than re-deriving from localStorage, so the two never disagree.
+  // index.html's inline script already set the class pre-paint; read it back so the two never disagree.
   return document.documentElement.classList.contains("light") ? "light" : "dark";
 }
 
@@ -53,11 +52,7 @@ export function ThemeProvider({ children }) {
         Math.max(y, window.innerHeight - y)
       );
 
-      // See index.css: this class strips the header's backdrop-blur and
-      // pauses the background line animation for the transition's duration —
-      // both are expensive to include in the snapshot the browser takes
-      // right below, and skipping them is most of what makes this feel
-      // smooth instead of janky on a phone.
+      // See index.css: this class drops the header blur and pauses the background animation during the transition, which keeps it smooth on phones.
       document.documentElement.classList.add("vt-transitioning");
 
       const transition = document.startViewTransition(() => flushSync(apply));

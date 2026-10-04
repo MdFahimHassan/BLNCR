@@ -2,12 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import NumberFlow from "@number-flow/react";
 import Avatar from "./Avatar";
 
-// Three sample "snapshots" of a group's balances, cycled forward in a loop
-// (0 -> 1 -> 2 -> 0 -> ...). Deliberately 3+ states, not 2: with only two
-// snapshots, "rotate forward" and "bounce back and forth" are the same
-// sequence, so every other transition retraces the previous one in reverse —
-// that's what read as a "jump." A third state makes it a real rotation.
-// Each snapshot's values sum to ~0 (credits balance debits), like a real ledger.
+// Three sample balance snapshots, cycled in a loop. Three rather than two: with two, "rotate" and "bounce" are the same sequence.
+// Each snapshot sums to ~0, like a real ledger.
 const SNAPSHOTS = [
   [
     { id: 1, name: "Alice", value: 42.5 },
@@ -27,19 +23,12 @@ const SNAPSHOTS = [
 ];
 
 const TWEEN_MS = 900;
-// Slow start, quicker middle, gentle stop — the same family of curve used
-// elsewhere in the hero, just expressed as a JS function since we're driving
-// this frame-by-frame with rAF rather than a CSS transition.
+// Ease-in-out curve as a JS function, since the tween is driven frame by frame.
 function easeInOutCubic(p) {
   return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 }
 
-// Hoisted to module scope on purpose: Row re-renders on every animation
-// frame (that's how the bar tween works), and NumberFlow re-runs internal
-// setup work whenever the *reference* of these props changes — not just
-// when their contents change. Defining `{...}` inline in the JSX below would
-// create a brand-new object on every one of those ~54 renders per transition,
-// which is what was causing the stutter. Stable references fix it.
+// Module scope on purpose: Row renders every animation frame and NumberFlow re-runs setup when prop references change.
 const CURRENCY_FORMAT = {
   style: "currency",
   currency: "USD",
@@ -49,21 +38,13 @@ const CURRENCY_FORMAT = {
 };
 const FLOW_TIMING = { duration: TWEEN_MS, easing: "cubic-bezier(0.45, 0, 0.15, 1)" };
 
-// Computed once, across every snapshot, not per-snapshot: this is the bar's
-// fixed 0-100% scale. If this were recalculated from just the *current*
-// snapshot's values (as it was before), the scale itself would silently
-// rescale the instant you switch snapshots — before the tween even starts
-// moving the number — which is what showed up as a jump at every transition
-// boundary. A fixed global scale means only the values move; the ruler never does.
+// Computed across all snapshots so the bar scale stays fixed and only the values move.
 const GLOBAL_MAX_ABS = Math.max(
   ...SNAPSHOTS.flatMap((snapshot) => snapshot.map((r) => Math.abs(r.value))),
   1
 );
 
-// Tweens a number from its previous value to `target` like a stopwatch/odometer
-// counter, instead of jumping straight to the new figure. Driving this in JS
-// (rather than relying on a separate CSS width transition on the bar) means
-// the number and the bar are always perfectly in sync, off one shared value.
+// Tweens toward `target` in JS so the figure and the bar stay in sync off one value.
 function useAnimatedNumber(target, { active = true } = {}) {
   const [display, setDisplay] = useState(active ? 0 : target);
   const fromRef = useRef(active ? 0 : target);
@@ -84,16 +65,7 @@ function useAnimatedNumber(target, { active = true } = {}) {
     cancelAnimationFrame(rafRef.current);
 
     const tick = (now) => {
-      // A theme toggle's circular wipe is a one-shot, full-page View
-      // Transition — any state update anywhere on the page during that
-      // ~0.5s window forces extra render/layout work competing with the
-      // browser's own compositing of the wipe. This tween fires setState
-      // every frame for up to 900ms and was doing exactly that whenever a
-      // toggle happened to land mid-tween (which, cycling every 3.6s, is
-      // more often than not "rare"). Freezing it — by holding the tween's
-      // clock still (advancing `start` by the same wall-clock delta rather
-      // than skipping the frame outright) — means it picks back up exactly
-      // where it left off once the wipe finishes, with no visible jump.
+      // Hold the tween's clock still during the theme-toggle wipe so it resumes without a jump.
       const dt = now - lastNow;
       lastNow = now;
       if (document.documentElement.classList.contains("vt-transitioning")) {
@@ -124,20 +96,12 @@ function Row({ name, id, value, maxAbs, ready }) {
   const target = Number(value);
   const displayValue = useAnimatedNumber(target, { active: ready });
 
-  // Bar: sign must follow the live tweened value so the two direction-divs
-  // swap over exactly when the animated magnitude passes through zero — that's
-  // what avoids a width jump (see GLOBAL_MAX_ABS above for the other half of that fix).
+  // Bar direction follows the live tweened value so it flips exactly when the magnitude crosses zero.
   const pct = ready && maxAbs > 0 ? Math.min(100, (Math.abs(displayValue) / maxAbs) * 100) : 0;
   const isCreditBar = displayValue > 0.005;
   const isDebitBar = displayValue < -0.005;
 
-  // Text color: NumberFlow runs its own internal transition for the sign,
-  // currency symbol and digits, on its own schedule — it doesn't expose an
-  // in-progress value the way our own tween does. Keying the figure's color
-  // to the live tween meant the sign/currency and the digits could briefly
-  // disagree on color mid-transition. Keying it to the *target* instead means
-  // the whole figure is one stable color for the entire transition, changing
-  // only once — at the same instant NumberFlow's own value prop changes.
+  // Color follows the target value so sign, currency and digits never disagree mid-transition.
   const isCreditText = target > 0.005;
   const isDebitText = target < -0.005;
 
@@ -201,9 +165,7 @@ export default function LedgerPreview({ className = "" }) {
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      // Skip this rotation if a theme wipe is mid-flight — advancing here
-      // would kick off a fresh 900ms tween (see useAnimatedNumber) right in
-      // the middle of it. It just tries again on the next 3.6s tick.
+      // Skip this rotation while a theme wipe is in flight; try again on the next tick.
       if (document.documentElement.classList.contains("vt-transitioning")) return;
       setSnapshotIndex((i) => (i + 1) % SNAPSHOTS.length);
     }, 3600);

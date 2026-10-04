@@ -8,10 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Adapts our {@link User} entity to Spring Security's {@link UserDetails} contract
- * without polluting the entity itself with security-framework concerns.
- */
 @Getter
 public class UserPrincipal implements UserDetails {
 

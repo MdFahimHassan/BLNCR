@@ -97,7 +97,7 @@ export default function DebtGraphCollapse() {
             </filter>
           </defs>
 
-          {/* Raw (messy) debts — fades out immediately when settling, fades in only once the final lines have mostly cleared on the way back */}
+          {/* Raw debts: fade out immediately when settling, back in once the final lines have mostly cleared */}
           {RAW_EDGES.map((e, i) => (
             <g
               key={`raw-${i}`}
@@ -122,7 +122,7 @@ export default function DebtGraphCollapse() {
             </g>
           ))}
 
-          {/* Simplified (final) payments — fades out immediately when un-settling, fades in only once the raw lines have mostly cleared */}
+          {/* Simplified payments: fade out immediately when un-settling, back in once the raw lines have mostly cleared */}
           {FINAL_EDGES.map((e, i) => (
             <g
               key={`final-${i}`}

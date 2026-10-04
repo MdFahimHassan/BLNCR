@@ -1,6 +1,5 @@
-// Client-side email validation. This is only a convenience so people get instant feedback:
-// the server re-validates everything (syntax, reserved domains, and a DNS check) and is the
-// real authority. Keep the reserved lists in sync with ValidEmailValidator.java.
+// Client-side email check for instant feedback only; the server is the authority.
+// Keep the reserved lists in sync with ValidEmailValidator.java.
 
 const EMAIL_RE =
   /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+(?:[A-Za-z]{2,24}|xn--[A-Za-z0-9-]{1,59})$/;

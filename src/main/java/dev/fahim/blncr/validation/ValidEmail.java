@@ -10,15 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Stricter replacement for Jakarta's {@code @Email}, which accepts things like {@code a@b}
- * (no TLD) and reserved placeholder addresses such as {@code someone@example.com}.
- * <p>
- * Checks, in order: length limits, strict syntax with a real TLD, reserved/placeholder
- * domains (example.com, *.test, *.invalid, ...), and finally that the domain actually exists
- * in DNS and can receive mail (MX record, or A/AAAA fallback per RFC 5321).
- * <p>
- * Note: this proves the <i>domain</i> is real, not that the <i>mailbox</i> exists or belongs
- * to the person registering - only an email verification link can prove that.
+ * Stricter replacement for Jakarta's {@code @Email}: needs a real TLD, rejects reserved domains (example.com, *.test, ...),
+ * and requires the domain to resolve in DNS with an MX or A/AAAA record. Proves the domain exists, not the mailbox.
  */
 @Documented
 @Constraint(validatedBy = ValidEmailValidator.class)

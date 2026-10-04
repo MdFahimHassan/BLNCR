@@ -5,34 +5,20 @@ import card3 from "../assets/card-3.webp";
 import card4 from "../assets/card-4.webp";
 import card5 from "../assets/card-5.webp";
 
-// Five distinct card faces, mounted on a tilted ring rather than a flat arc.
-// The ring itself never moves — five fixed slots around a circle, each with a
-// pre-computed depth (t). What moves is which card sits in which slot: every
-// tick the whole ring advances one slot, so cards cycle back → side → center →
-// side → back in one consistent direction, always on screen, never exiting frame.
+// Five cards on a tilted ring of fixed slots; each tick the whole ring advances one slot.
 const CARD_IMAGES = [card1, card2, card3, card4, card5];
 
-// NOTE: x-placement uses a wider radius than the depth math below.
-// At R=200, sin(144°) < sin(72°), so the two back slots land *inside* the
-// front-side slots' horizontal span and end up almost fully hidden behind
-// them (only ~30px of a 110px-wide back card stays clear). Widening the
-// radius used for x doesn't touch t/scale/opacity/y/brightness (none of
-// those depend on radius) — it just gives the back cards enough room to
-// peek out from behind the front-side cards instead of vanishing.
+// x uses a wider radius than the depth math, so the back cards peek out from behind the front-side cards.
 const RADIUS = 320;
-const ROTATE_MS = 2400; // slightly slower cadence between rotations
-const TRANSITION_MS = 1000; // longer, so each step glides instead of snapping
-// Smooth ease-in-out (gentle accel + decel), instead of the sharper ease-out
-// "snap" curve — this is what actually reads as "smoother" for a motion that
-// repeats every couple seconds, since it never comes to an abrupt stop.
+const ROTATE_MS = 2400;
+const TRANSITION_MS = 1000;
+// Ease-in-out reads smoother than an ease-out snap for a motion that repeats every couple of seconds.
 const EASE = "cubic-bezier(0.45, 0, 0.15, 1)";
 
 // Slot angles in degrees, front-center at 0°.
 const ANGLES = [-144, -72, 0, 72, 144];
 
-// Precompute each slot's geometry once from theta — nothing here is a hardcoded
-// pixel guess, it all falls out of sin/cos so the ring stays mathematically
-// consistent if RADIUS or the angle set ever changes.
+// Slot geometry is derived from the angles with sin/cos, so nothing is hardcoded.
 const SLOTS = ANGLES.map((deg) => {
   const theta = (deg * Math.PI) / 180;
   const x = RADIUS * Math.sin(theta);
@@ -76,14 +62,7 @@ export default function HeroCardArc() {
     return () => clearInterval(intervalRef.current);
   }, []);
 
-  // Invert `order` so each card can look up its own current slot instead of
-  // the render loop iterating over `order` directly. This is the fix: iterate
-  // over a FIXED sequence of cards (CARD_IMAGES, by index) so React never has
-  // to reorder the actual DOM nodes — only their inline styles change every
-  // tick. Iterating over `order` itself (which is what changes every tick)
-  // caused React to reshuffle 4 of the 5 DOM elements each render, and a node
-  // that gets moved in the tree and re-styled in the same commit unreliably
-  // skips its CSS transition — which is why only one card appeared to animate.
+  // Iterate a fixed card sequence rather than `order`, so React never reorders DOM nodes (which would skip their CSS transitions).
   const slotOf = useMemo(() => {
     const inverse = new Array(5);
     order.forEach((cardIndex, slotIndex) => {
@@ -93,23 +72,10 @@ export default function HeroCardArc() {
   }, [order]);
 
   return (
-    // Why an outer + inner wrapper, rather than just shrinking the h-[...]
-    // values below to match the scale: the glow elements inside are
-    // positioned with hardcoded pixel offsets (bottom-[-70px], h-[360px])
-    // relative to THIS box's own declared height. Changing that height
-    // directly would shift what those offsets resolve to and subtly move
-    // the glow relative to the cards. Instead, the inner box keeps its
-    // original height/scale/every child untouched — this outer wrapper
-    // only fixes how much vertical space is *reserved in page flow*
-    // (h-[186px]/sm:h-[295px]/lg:h-[420px] = height × scale at each
-    // breakpoint), and centers the unchanged inner box inside it.
-    // Previously the reserved space (300/360/420px) didn't match the
-    // scaled visual output (186/295/420px), leaving ~114px of dead
-    // whitespace above and below the hero art on mobile, ~65px on
-    // small tablets.
+    // The outer wrapper reserves the scaled height in page flow; the inner box keeps its original size so the pixel-offset glows stay put.
     <div className="relative mx-auto mt-4 flex h-[186px] w-full max-w-[1040px] items-center justify-center overflow-visible sm:h-[295px] lg:h-[420px]">
       <div className="relative h-[300px] w-full shrink-0 scale-[0.62] sm:h-[360px] sm:scale-[0.82] lg:h-[420px] lg:scale-100">
-        {/* Horizon glow — soft overlapping radial fields only, no hard ring edges */}
+        {/* Horizon glow: soft overlapping radial fields, no hard ring edges */}
         <div
           className="pointer-events-none absolute bottom-[-70px] left-1/2 h-[360px] w-[1160px] -translate-x-1/2 rounded-full blur-3xl"
           style={{

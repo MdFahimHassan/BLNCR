@@ -3,8 +3,7 @@ import { api } from "./client";
 export const authApi = {
   register: (payload) => api.post("/api/auth/register", payload).then((r) => r.data),
   login: (payload) => api.post("/api/auth/login", payload).then((r) => r.data),
-  // Token is passed explicitly: by the time axios runs its request interceptor the caller has
-  // already cleared localStorage, so the interceptor could no longer find it.
+  // The token is passed explicitly: callers clear localStorage before this runs, so the interceptor couldn't find it.
   logout: (token) =>
     api.post("/api/auth/logout", null, { headers: { Authorization: `Bearer ${token}` } }),
 };

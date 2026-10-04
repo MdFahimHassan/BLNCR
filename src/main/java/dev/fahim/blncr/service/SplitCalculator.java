@@ -16,12 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Turns an expense amount + split instructions into a per-user "amount owed" map.
- * <p>
- * All arithmetic is done in integer cents rather than raw {@link BigDecimal} division, because
- * naive decimal division (e.g. splitting $100 three ways) doesn't divide evenly and money must
- * never be silently lost or gained to rounding. Leftover cents are distributed one at a time
- * using the largest-remainder method so every split adds up to exactly the expense total.
+ * Turns an expense amount and split instructions into a per-user owed map. Math is done in integer cents,
+ * with leftover cents handed out by the largest-remainder method so splits always sum exactly to the total.
  */
 @Component
 public class SplitCalculator {
@@ -92,9 +88,6 @@ public class SplitCalculator {
 
         long totalCents = toCents(totalAmount);
 
-        // Largest-remainder method: give everyone their floor share, then hand out the leftover
-        // cents to whoever had the biggest fractional remainder, so the split stays proportional
-        // instead of always favoring whoever appears first in the list.
         record Share(Long userId, long floorCents, BigDecimal remainder) {}
 
         List<Share> shares = new ArrayList<>();

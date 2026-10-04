@@ -10,8 +10,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// @DataJpaTest auto-detects H2 on the classpath and swaps in an embedded database instead of
-// the real Postgres datasource configured in application.properties.
+// @DataJpaTest swaps in embedded H2 instead of the Postgres datasource.
 @DataJpaTest
 @ActiveProfiles("test")
 class UserRepositoryTest {

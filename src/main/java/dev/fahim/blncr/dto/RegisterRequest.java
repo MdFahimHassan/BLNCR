@@ -16,8 +16,7 @@ public record RegisterRequest(
         @ValidEmail(message = "Enter a valid email address")
         String email,
 
-        // BCrypt only uses the first 72 bytes of a password, so anything longer adds no security
-        // and just burns CPU. AuthService additionally enforces the 72-BYTE limit (multi-byte chars).
+        // BCrypt ignores bytes past 72; AuthService enforces the limit in bytes.
         @NotBlank(message = "Password is required")
         @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
         String password

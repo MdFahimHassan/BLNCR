@@ -81,10 +81,8 @@ public class BalanceService {
     }
 
     /**
-     * Debt-simplification algorithm: repeatedly matches the largest net creditor with the
-    * largest net debtor and settles the smaller of the two amounts between them. This greedy
-    * "largest first" heuristic produces a compact plan, but does not guarantee the fewest possible
-    * person-to-person transactions for every balance configuration.
+     * Greedy debt simplification: repeatedly settles the largest creditor against the largest debtor.
+     * Gives a compact plan, but not necessarily the minimum number of transactions.
      */
     private List<SettlementSuggestion> simplifyDebts(Map<Long, BigDecimal> netBalances, Map<Long, User> usersById) {
         List<MutableBalance> creditors = new ArrayList<>();

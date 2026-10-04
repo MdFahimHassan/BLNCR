@@ -232,11 +232,7 @@ public class GroupManagementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Group member not found"));
     }
 
-    /**
-     * Someone with a non-zero balance must not leave: settlements can only be recorded between
-     * active members, so their debt (or what they're owed) could never be cleared afterwards.
-     * Amounts are exact cents (NUMERIC(19,2)), so an exact zero check is correct here.
-     */
+    /** Members with a non-zero balance can't leave: settlements can only be recorded between active members. */
     private void requireSettledUp(Long groupId, Long userId, String message) {
         boolean unsettled = expenseRepository.findNetBalancesForUser(userId).stream()
                 .anyMatch(balance -> groupId.equals(balance.getGroupId())

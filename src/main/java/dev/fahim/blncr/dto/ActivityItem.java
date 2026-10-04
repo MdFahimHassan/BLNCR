@@ -9,11 +9,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * A single chronological entry in a group's activity feed. {@code type} is either
- * {@code "EXPENSE"} or {@code "SETTLEMENT"}.
- * <p>
- * For an EXPENSE: {@code primaryUser} is who paid; {@code secondaryUser} is unused (null).
- * For a SETTLEMENT: {@code primaryUser} is who paid; {@code secondaryUser} is who received it.
+ * One entry in a group's activity feed; {@code type} is "EXPENSE" or "SETTLEMENT".
+ * {@code primaryUser} is who paid; {@code secondaryUser} is the recipient of a settlement (null for expenses).
  */
 @Builder
 public record ActivityItem(

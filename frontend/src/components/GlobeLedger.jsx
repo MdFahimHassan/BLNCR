@@ -2,41 +2,23 @@ import { useEffect, useRef, useCallback } from "react";
 import createGlobe from "cobe";
 import { useTheme } from "../context/ThemeContext";
 
-// Replace with real data later (e.g. the signed-in user's actual cross-group
-// balances). Amounts are in whole dollars for the demo; wire to your real
-// balance data however LedgerPreview/SettleUpPanel already source theirs.
+// Demo data: replace with real cross-group balances. Amounts are whole dollars.
 const YOU = { id: "you", name: "You", location: [40.7128, -74.006] };
 
 const MEMBERS = [
   { id: "alice", name: "Alice", location: [51.5072, -0.1276], amount: 42 }, // London
-  { id: "marco", name: "Marco", location: [-33.9249, 18.4241], amount: -18 }, // Cape Town — was Milan, only ~6° of latitude from Alice, which is why the tags kept colliding on screen regardless of rotation angle
+  { id: "marco", name: "Marco", location: [-33.9249, 18.4241], amount: -18 }, // Cape Town
   { id: "yuki", name: "Yuki", location: [35.6762, 139.6503], amount: 65 },
   { id: "priya", name: "Priya", location: [19.076, 72.8777], amount: -27 },
 ];
 
-// Theme colors as normalized [r,g,b] — keep these in sync with index.css by hand,
-// cobe's WebGL layer can't read CSS variables directly.
+// Theme colors as [r,g,b] in 0-1; keep in sync with index.css by hand (cobe's WebGL layer can't read CSS variables).
 const ACCENT = [0.843, 1, 0.243]; // --color-accent      #d7ff3e
 const CREDIT = [0.204, 0.827, 0.6]; // --color-credit    #34d399
 const DEBIT = [0.984, 0.443, 0.522]; // --color-debit    #fb7185
 
-// dark:1 makes the OCEAN transparent (your page shows through) — it does NOT
-// dim the dots. baseColor is the literal color of the land-mass dots, so on a
-// dark page it needs to be bright, not a dim gray, or the dots read as
-// invisible even though they're technically drawing. diffuse needs to be much
-// higher too for real light/shadow contrast across the sphere (checked this
-// against a real production dark-mode cobe globe, not guessed twice in a row).
-//
-// The ocean stays transparent either way (dark:1 never changes), so on a
-// light page it's the dots that would go invisible if left bright — the
-// exact same near-white-on-white problem, mirrored, so light mode uses a
-// dark charcoal base instead. A near-black base needs its own brightness/
-// diffuse tuning though, not just the dark-theme numbers reused: mapBrightness
-// multiplies the base color, so a color that's already close to 0 barely
-// moves no matter what diffuse does — the dots go flat/matte instead of
-// showing the lit-vs-shadow falloff that reads as a "prominent, dotted
-// sphere" instead of a solid disc. Light mode's brightness/diffuse are
-// pushed up specifically to restore that range on a dark base.
+// dark:1 only makes the ocean transparent; baseColor is the literal color of the land dots, so it must contrast with the page.
+// Light mode uses a dark base, which needs its own higher brightness/diffuse to keep the lit-vs-shadow falloff.
 const GLOBE_COLORS = {
   dark: { base: [0.92, 0.94, 0.9], glow: [0.22, 0.26, 0.11], brightness: 4, diffuse: 3 },
   light: { base: [0.16, 0.17, 0.19], glow: [0.82, 0.83, 0.8], brightness: 7, diffuse: 4.5 },
@@ -46,10 +28,7 @@ const IDLE_PHI_SPEED = 0.02; // baseline auto-rotate speed when untouched
 const FRICTION = 0.94; // per-frame velocity decay after release — higher = coasts longer
 const THETA_LIMIT = 1.3; // radians (~74°) — stops the drag short of flipping the globe upside down
 
-// Ambient, self-triggered motion (the idle auto-spin) is what
-// prefers-reduced-motion asks sites to drop — dragging remains available
-// since that's motion the user directly asked for, not motion happening to
-// them. HeroCardArc already respects this; the globe previously didn't.
+// The idle auto-spin is ambient motion, so prefers-reduced-motion turns it off; dragging stays available.
 const prefersReducedMotion =
   typeof window !== "undefined" &&
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -63,22 +42,13 @@ export default function GlobeLedger({ className = "" }) {
   const canvasRef = useRef(null);
   const { theme } = useTheme();
 
-  // Current absolute view angles, mutated directly by both dragging and the
-  // momentum/idle loop — there's no "rest" state to snap back to, wherever
-  // this ends up is where it stays.
+  // Absolute view angles, mutated by both dragging and the momentum/idle loop.
   const rotationRef = useRef({ phi: 0, theta: 0.28 });
-  // Angular velocity per frame. phi starts at the idle speed so it's already
-  // auto-rotating before anyone touches it (unless reduced-motion is on,
-  // where it starts and stays at rest until dragged); theta starts at 0.
+  // Angular velocity per frame; phi starts at the idle speed (or at rest under reduced motion).
   const velocityRef = useRef({ phi: REST_IDLE_PHI_SPEED, theta: 0 });
   const pointerRef = useRef(null); // last pointer {x, y} while dragging
   const isDraggingRef = useRef(false);
-  // Read fresh every frame by the render loop below, rather than baked into
-  // the globe at creation — lets baseColor/glowColor/brightness/diffuse
-  // update live on a theme flip via globe.update() (a cheap uniform change)
-  // instead of tearing down and recreating the whole WebGL globe, which is
-  // what a `[theme]` dependency on the main effect used to do and was the
-  // actual source of the toggle-animation jank when the globe was on screen.
+  // Read every frame by the render loop, so a theme flip updates the globe via globe.update() instead of recreating it.
   const themeConfigRef = useRef(GLOBE_COLORS[theme]);
   useEffect(() => {
     themeConfigRef.current = GLOBE_COLORS[theme];
@@ -95,9 +65,6 @@ export default function GlobeLedger({ className = "" }) {
     isDraggingRef.current = false;
     pointerRef.current = null;
     if (canvasRef.current) canvasRef.current.style.cursor = "grab";
-    // Whatever velocityRef holds at this instant (the smoothed drag speed
-    // from the last few pointermoves) becomes the flung momentum — picked
-    // up as-is by the render loop's friction decay below.
   }, []);
 
   useEffect(() => {
@@ -113,8 +80,7 @@ export default function GlobeLedger({ className = "" }) {
       rotationRef.current.phi += dPhi;
       rotationRef.current.theta = clamp(rotationRef.current.theta + dTheta, -THETA_LIMIT, THETA_LIMIT);
 
-      // Smooth (not instant) velocity estimate, so a fling reads from the
-      // last stretch of motion rather than one noisy final pixel delta.
+      // Smoothed so a fling reflects recent motion, not one noisy final delta.
       velocityRef.current.phi = velocityRef.current.phi * 0.7 + dPhi * 0.3;
       velocityRef.current.theta = velocityRef.current.theta * 0.7 + dTheta * 0.3;
     };
@@ -132,9 +98,6 @@ export default function GlobeLedger({ className = "" }) {
     let globe = null;
     let frameId = null;
     let cancelled = false;
-    // Starts true so the first frame() call (from init(), below) schedules
-    // normally; the IntersectionObserver below corrects this immediately if
-    // the canvas actually mounted off-screen.
     let isVisible = true;
 
     const markers = [
@@ -154,29 +117,18 @@ export default function GlobeLedger({ className = "" }) {
       id: m.id,
     }));
 
-    // Hoisted out of init() (rather than declared as a nested function
-    // inside it, as cobe's own demo does) so the IntersectionObserver below
-    // — which lives outside init()'s scope — can also call it to resume the
-    // loop after it's been stopped by scrolling off-screen.
+    // Defined outside init() so the IntersectionObserver can resume the loop.
     function frame() {
       if (cancelled || !globe) return;
 
-      // Same reasoning as the LedgerPreview tween freeze: this fires a real
-      // WebGL draw call every frame, which is exactly the kind of ongoing
-      // GPU work that competes with the browser's own compositing of the
-      // theme-toggle wipe. Skipping the draw (not the rAF scheduling) for
-      // the transition's brief duration means the globe just holds its
-      // current frame — imperceptible — instead of fighting the wipe for
-      // frame time.
+      // Skip the draw (not the rAF) during the theme-toggle transition so the globe doesn't compete with it for frame time.
       if (document.documentElement.classList.contains("vt-transitioning")) {
         frameId = isVisible ? requestAnimationFrame(frame) : null;
         return;
       }
 
       if (!isDraggingRef.current) {
-        // Momentum: keep coasting on last known velocity, decaying via
-        // friction each frame. Nothing here ever pulls theta back toward
-        // its starting value — wherever it comes to rest is where it stays.
+        // Momentum: coast on the last velocity, decaying by FRICTION each frame.
         rotationRef.current.phi += velocityRef.current.phi;
         rotationRef.current.theta = clamp(
           rotationRef.current.theta + velocityRef.current.theta,
@@ -186,9 +138,7 @@ export default function GlobeLedger({ className = "" }) {
         velocityRef.current.phi *= FRICTION;
         velocityRef.current.theta *= FRICTION;
 
-        // Once the flung speed has mostly bled off, ease phi back toward
-        // the gentle idle auto-spin instead of drifting to a dead stop —
-        // or, under reduced-motion, ease back to a full stop instead.
+        // Once the fling bleeds off, ease phi back to the idle spin (or to a stop under reduced motion).
         if (Math.abs(velocityRef.current.phi) < IDLE_PHI_SPEED * 1.5) {
           velocityRef.current.phi += (REST_IDLE_PHI_SPEED - velocityRef.current.phi) * 0.01;
         }
@@ -196,8 +146,6 @@ export default function GlobeLedger({ className = "" }) {
           velocityRef.current.theta = 0;
         }
       }
-      // While dragging, handlePointerMove above already wrote the latest
-      // phi/theta directly into rotationRef — nothing to do here but read it.
 
       globe.update({
         phi: rotationRef.current.phi,
@@ -208,20 +156,14 @@ export default function GlobeLedger({ className = "" }) {
         mapBrightness: themeConfigRef.current.brightness,
       });
 
-      // Scrolled off-screen: stop scheduling frames entirely (no rAF churn,
-      // no GPU work) rather than continuing to spin an invisible globe.
-      // The observer below calls frame() again once it re-enters view.
+      // Off-screen: stop scheduling frames; the observer below restarts the loop.
       frameId = isVisible ? requestAnimationFrame(frame) : null;
     }
 
     function init() {
       if (cancelled || globe) return;
       const width = canvas.offsetWidth;
-      // Below ~40px the grid/aspect-ratio layout almost certainly hasn't
-      // settled yet — retry next frame instead of locking in a tiny canvas
-      // resolution that CSS would then just stretch (blurry, cramped, and
-      // wrongly-sized permanently, since cobe sizes its internal render
-      // target once at creation, not continuously).
+      // Under ~40px the layout hasn't settled; retry next frame instead of locking in a tiny render size.
       if (width < 40) {
         requestAnimationFrame(init);
         return;
@@ -233,13 +175,11 @@ export default function GlobeLedger({ className = "" }) {
         height: width,
         phi: 0,
         theta: 0.28,
-        dark: 1, // dark dotted globe — the CDN demo this is adapted from used a light one
+        dark: 1,
         diffuse: themeConfigRef.current.diffuse,
         mapSamples: 16000,
         mapBrightness: themeConfigRef.current.brightness,
-        // Small floor so the very first frame or two (drawn before the
-        // embedded map texture has finished decoding) still show *something*
-        // instead of a blank sphere.
+        // Small floor so the first frames, drawn before the map texture decodes, aren't blank.
         mapBaseBrightness: 0.05,
         baseColor: themeConfigRef.current.base,
         markerColor: ACCENT,
@@ -257,10 +197,7 @@ export default function GlobeLedger({ className = "" }) {
         canvas.style.opacity = "1";
       });
 
-      // cobe v2 removed the old onRender-callback API — createGlobe() now
-      // renders exactly one frame at creation and never again on its own.
-      // Driving rotation means calling globe.update() ourselves, every frame
-      // (frame() defined above, outside init — see comment there for why).
+      // cobe v2 renders once at creation; rotation needs globe.update() every frame.
       frame();
     }
 
@@ -271,8 +208,6 @@ export default function GlobeLedger({ className = "" }) {
       observer = new IntersectionObserver(
         (entries) => {
           isVisible = entries[0]?.isIntersecting ?? true;
-          // Loop had stopped itself (frameId null) while off-screen —
-          // restart it now that it's back in view.
           if (isVisible && frameId === null && globe) frame();
         },
         { rootMargin: "100px" }
@@ -280,15 +215,7 @@ export default function GlobeLedger({ className = "" }) {
       observer.observe(canvas);
     }
 
-    // cobe sizes its internal render target once, at createGlobe() time —
-    // it never re-reads the canvas's CSS size on its own. Without this, a
-    // phone rotation or a resized browser window leaves the *element*
-    // filling its new container correctly (that part is just CSS), but the
-    // actual rendered globe stays locked to its original resolution and
-    // gets stretched to fit — noticeably softer/blurrier, not broken, but
-    // not sharp either. globe.update() accepts new width/height directly
-    // (cobe v2), so this just re-measures and pushes the new size in,
-    // rather than tearing down and recreating the whole globe.
+    // cobe sizes its render target once, so re-measure on resize/rotation and push the new size via globe.update().
     let resizeTimer = null;
     let lastWidth = null;
     function handleResize() {
@@ -317,10 +244,6 @@ export default function GlobeLedger({ className = "" }) {
       window.removeEventListener("orientationchange", handleResize);
       if (globe) globe.destroy();
     };
-    // Mount once — theme changes are now handled live inside frame() via
-    // themeConfigRef (see above) rather than by tearing down and recreating
-    // the WebGL globe, which used to happen here and was the main cause of
-    // the toggle animation stuttering whenever this section was on screen.
   }, []);
 
   return (
@@ -341,10 +264,7 @@ export default function GlobeLedger({ className = "" }) {
         }}
       />
 
-      {/* "You" tag — anchored to the you marker via cobe's CSS anchor positioning.
-          Stays hidden (opacity var defaults to 0) in browsers without anchor-positioning
-          support, so the globe itself still renders fine everywhere; the tags are a
-          progressive enhancement, not a requirement. */}
+      {/* "You" tag, anchored to the marker via cobe's CSS anchor positioning */}
       <div
         className="pointer-events-none absolute flex flex-col items-center"
         style={{
@@ -390,7 +310,7 @@ export default function GlobeLedger({ className = "" }) {
         </div>
       ))}
 
-      {/* arc amount tags — signed, colored credit/debit like every other balance in the app */}
+      {/* Arc amount tags, colored like every other balance */}
       {MEMBERS.map((m) => (
         <div
           key={`arc-${m.id}`}

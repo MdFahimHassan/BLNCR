@@ -13,12 +13,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * The split math is the highest-value code in the project (see Progress.md), so it gets the
- * most thorough tests: every split total here is checked to sum back EXACTLY to the input
- * amount in cents, which is the whole point of doing the math in integer cents instead of
- * raw BigDecimal division.
- */
+/** Every split total is checked to sum back exactly to the input amount in cents. */
 class SplitCalculatorTest {
 
     private final SplitCalculator calculator = new SplitCalculator();

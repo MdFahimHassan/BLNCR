@@ -76,13 +76,7 @@ export default function DashboardPage() {
   );
 }
 
-// The static "Track shared expenses and settle up" tagline is the honest
-// default while balances are still loading (or there's nothing to
-// summarize yet). Once every group has answered, it's replaced with the
-// user's actual net position — turning dead subtitle copy into the one
-// number that matters most on this page. Deliberately waits for *all* of
-// them rather than updating as each one lands, so the line changes once,
-// not several times in a row while cards are still settling in.
+// Shows the tagline until every group's balances have loaded, then the user's net position (one update, not one per group).
 function Overview({ groups, byGroup }) {
   if (groups.length === 0) return "Track shared expenses and settle up";
 

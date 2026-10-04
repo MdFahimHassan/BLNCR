@@ -48,9 +48,7 @@ class ExpenseServiceTest {
     @Mock
     private GroupAccessService groupAccessService;
 
-    // Real instance on purpose: SplitCalculator is pure, deterministic logic already covered
-    // by its own unit tests, so wiring it in for real here checks the two layers integrate
-    // correctly rather than re-mocking math that's simple to just run.
+    // Real SplitCalculator on purpose: it's pure logic, so this checks that the layers integrate.
     private final SplitCalculator splitCalculator = new SplitCalculator();
 
     private ExpenseService expenseService;
