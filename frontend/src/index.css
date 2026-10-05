@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+/* Self-hosted variable fonts: Geist Sans for UI text, Geist Mono (tabular nums) for every monetary figure. */
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
+@import "@fontsource/geist-mono/600.css";
+
+@theme {
+  --font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Base */
+  --color-base: #0a0b0d;
+  --color-base-raised: #0e1013;
+
+  /* Surfaces */
+  --color-surface: #131519;
+  --color-surface-2: #191c21;
+  --color-surface-3: #21252c;
+
+  /* Borders */
+  --color-border: #24282f;
+  --color-border-soft: #1a1d23;
+  --color-border-strong: #33383f;
+
+  /* Text */
+  --color-text: #f2f3f5;
+  --color-text-soft: #9aa0ac;
+  --color-text-faint: #8890a0;
+
+  /* Brand accent — signal lime, reserved for primary actions & focal highlights only */
+  --color-accent: #d7ff3e;
+  --color-accent-dim: #a8cc2f;
+  --color-accent-ink: #10130a;
+
+  /* Financial polarity — kept separate from brand accent so meaning never collides */
+  --color-credit: #34d399;
+  --color-credit-soft: #0f2420;
+  --color-debit: #fb7185;
+  --color-debit-soft: #2a1418;
+  --color-debit-core: #ffd3da;
+  --color-accent-core: #f4ffb8;
+
+  /* -text variants: accent/credit/debit tuned for use as text. Identical in dark mode; the light theme darkens them for legibility. */
+  --color-accent-text: var(--color-accent);
+  --color-credit-text: var(--color-credit);
+  --color-debit-text: var(--color-debit);
+
+  --radius-card: 0.7rem;
+  --radius-control: 0.55rem;
+
+  /* Custom easing for entrances and press feedback (fast-out, gentle-settle). */
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  color-scheme: dark;
+}
+
+/* Light theme: surfaces, borders and base text are inverted. Accent/credit/debit stay as-is for fills and chips,
+   while the -text variants are darkened for legibility on light surfaces. */
+html.light {
+  color-scheme: light;
+
+  --color-base: #faf9f6;
+  --color-base-raised: #f1efe8;
+
+  --color-surface: #ffffff;
+  --color-surface-2: #f5f3ee;
+  --color-surface-3: #ebe8e1;
+
+  --color-border: #e3e0d7;
+  --color-border-soft: #edebe4;
+  --color-border-strong: #cfcbc0;
+
+  --color-text: #17181a;
+  --color-text-soft: #5b5e64;
+  --color-text-faint: #6b6e75;
+
+  --color-credit-soft: #e3f8ee;
+  --color-debit-soft: #fbe6e9;
+  --color-debit-core: #7a1024;
+  --color-accent-core: #3d4400;
+
+  --color-accent-text: #2f5900;
+  --color-credit-text: #087a4d;
+  --color-debit-text: #c81e3a;
+}
+
+body {
+  background: var(--color-base);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Every monetary figure in the app should carry this class */
+.ledger-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Inline chip for technical terms called out inside feature copy (e.g. "BigDecimal"). */
+.feature-code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  padding: 0.05em 0.4em;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* Flowing background lines (BackgroundFX): pathLength={100} on each <path> normalizes dash units to 0-100,
+   so one dash animated via stroke-dashoffset draws and retracts the line without measuring it in JS. */
+.blncr-line {
+  stroke-dasharray: 100 100;
+  animation-name: blncr-line-draw;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes blncr-line-draw {
+  0%, 100% {
+    stroke-dashoffset: 70; /* ~30% of the line visible */
+  }
+  50% {
+    stroke-dashoffset: 0; /* fully drawn */
+  }
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+/* Consistent visible focus ring across native + custom controls */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Theme toggle: circular reveal via the View Transitions API. The default cross-fade is disabled so the only
+   motion is the clip-path circle animated in ThemeContext. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* While the circle reveal plays, drop the two costliest effects (header backdrop-blur, BackgroundFX animation)
+   to keep the transition smooth. */
+html.vt-transitioning .backdrop-blur-sm {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html.vt-transitioning .blncr-line {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes hero-card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Thin scrollbars that match the ledger surface */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 8px;
+}

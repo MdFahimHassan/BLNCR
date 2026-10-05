@@ -1,0 +1,279 @@
+package dev.fahim.blncr.integration;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.fahim.blncr.dto.CreateExpenseRequest;
+import dev.fahim.blncr.entity.ExpenseCategory;
+import dev.fahim.blncr.dto.CreateGroupRequest;
+import dev.fahim.blncr.dto.ChangeMemberRoleRequest;
+import dev.fahim.blncr.dto.CreateSettlementRequest;
+import dev.fahim.blncr.dto.ExpenseSplitInput;
+import dev.fahim.blncr.entity.SplitType;
+import dev.fahim.blncr.entity.GroupRole;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * End-to-end core loop against the real Spring context, JWT filter chain and in-memory H2:
+ * register, group, invite, expense, balances, settle-up, settlement, activity feed. One ordered flow on purpose.
+ */
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class GroupExpenseFlowIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private String aliceToken;
+    private String bobToken;
+    private Long aliceId;
+    private Long bobId;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        var aliceAuth = register("Alice", "alice@" + System.nanoTime() + ".com", "password123");
+        var bobAuth = register("Bob", "bob@" + System.nanoTime() + ".com", "password123");
+
+        aliceToken = objectMapper.readTree(aliceAuth).get("token").asText();
+        aliceId = objectMapper.readTree(aliceAuth).get("userId").asLong();
+        bobToken = objectMapper.readTree(bobAuth).get("token").asText();
+        bobId = objectMapper.readTree(bobAuth).get("userId").asLong();
+    }
+
+    @Test
+    @DisplayName("full flow: register -> group -> expense -> balances -> settle -> activity")
+    void fullExpenseSplittingFlow() throws Exception {
+        // 1. Alice creates a group; she's automatically its first member.
+        String groupJson = mockMvc.perform(post("/api/groups")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateGroupRequest("Ski Trip"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.memberCount").value(1))
+                .andReturn().getResponse().getContentAsString();
+        Long groupId = objectMapper.readTree(groupJson).get("id").asLong();
+
+        // 2. Alice creates an invite link and Bob accepts it while authenticated.
+        String inviteJson = mockMvc.perform(post("/api/groups/{id}/invitations", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String inviteToken = objectMapper.readTree(inviteJson).get("token").asText();
+
+        mockMvc.perform(post("/api/invitations/{token}/accept", inviteToken)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groupId").value(groupId));
+
+        mockMvc.perform(get("/api/groups/{id}/members", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(2)));
+
+        mockMvc.perform(post("/api/groups/{id}/invitations", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch(
+                        "/api/groups/{groupId}/members/{userId}/role", groupId, bobId)
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ChangeMemberRoleRequest(GroupRole.ADMIN))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+
+        mockMvc.perform(post("/api/groups/{id}/invitations", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isCreated());
+
+        // 3. Alice pays $60 for lift tickets, split equally between her and Bob -> Bob owes $30.
+        CreateExpenseRequest expenseRequest = new CreateExpenseRequest(
+                "Lift tickets", new BigDecimal("60.00"), aliceId, SplitType.EQUAL,
+                List.of(new ExpenseSplitInput(aliceId, null), new ExpenseSplitInput(bobId, null)));
+        String idempotencyKey = java.util.UUID.randomUUID().toString();
+
+        String expenseJson = mockMvc.perform(post("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .header("Idempotency-Key", idempotencyKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(expenseRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.splits", org.hamcrest.Matchers.hasSize(2)))
+                .andReturn().getResponse().getContentAsString();
+        Long expenseId = objectMapper.readTree(expenseJson).get("id").asLong();
+
+        CreateExpenseRequest editedExpense = new CreateExpenseRequest(
+                "Lift tickets", new BigDecimal("60.00"), aliceId, SplitType.EQUAL,
+                List.of(new ExpenseSplitInput(aliceId, null), new ExpenseSplitInput(bobId, null)),
+                ExpenseCategory.ENTERTAINMENT);
+        mockMvc.perform(put("/api/groups/{groupId}/expenses/{expenseId}", groupId, expenseId)
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(editedExpense)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.category").value("ENTERTAINMENT"));
+
+        mockMvc.perform(post("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .header("Idempotency-Key", idempotencyKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(expenseRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(expenseId));
+
+        // Bob can also see the expense (any member can list a group's expenses).
+        mockMvc.perform(get("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].description").value("Lift tickets"));
+
+        // 4. Balances reflect the debt, and the settle-up suggestion says Bob -> Alice, $30.
+        mockMvc.perform(get("/api/groups/{id}/balances", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestedSettlements", org.hamcrest.Matchers.hasSize(1)))
+                .andExpect(jsonPath("$.suggestedSettlements[0].fromUserId").value(bobId))
+                .andExpect(jsonPath("$.suggestedSettlements[0].toUserId").value(aliceId))
+                .andExpect(jsonPath("$.suggestedSettlements[0].amount").value(30.00));
+
+        // 5. Bob settles up.
+        CreateSettlementRequest settlementRequest = new CreateSettlementRequest(bobId, aliceId, new BigDecimal("30.00"));
+        mockMvc.perform(post("/api/groups/{id}/settlements", groupId)
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(settlementRequest)))
+                .andExpect(status().isCreated());
+
+        // 6. Balances are back to zero, no more suggestions.
+        mockMvc.perform(get("/api/groups/{id}/balances", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.suggestedSettlements", org.hamcrest.Matchers.hasSize(0)));
+
+        // 7. The activity feed shows both the expense and the settlement, newest first.
+        mockMvc.perform(get("/api/groups/{id}/activity", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$[0].type").value("SETTLEMENT"))
+                .andExpect(jsonPath("$[1].type").value("EXPENSE"));
+
+        mockMvc.perform(post("/api/groups/{id}/leave", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/api/groups/{id}", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/groups/{id}/expenses", groupId)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("selected group currency survives creation and group-list reload")
+    void selectedCurrencySurvivesGroupReload() throws Exception {
+        mockMvc.perform(post("/api/groups")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateGroupRequest("Rangamati", "BDT"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.currency").value("BDT"));
+
+        mockMvc.perform(get("/api/groups").header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].currency").value("BDT"));
+    }
+
+    @Test
+    @DisplayName("timestamps are serialized as UTC instants (ISO-8601 ending in Z)")
+    void timestampsCarryAnExplicitUtcZone() throws Exception {
+        // Regression test: timestamps used to be zone-less LocalDateTime values, so browsers
+        // guessed the zone and showed server time as local time.
+        String utcInstant = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$";
+
+        mockMvc.perform(post("/api/groups")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateGroupRequest("Zone Check"))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.matchesPattern(utcInstant)));
+
+        mockMvc.perform(get("/api/users/me").header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.createdAt").value(org.hamcrest.Matchers.matchesPattern(utcInstant)));
+    }
+
+    @Test
+    @DisplayName("a request with no Authorization header is rejected")
+    void rejectsUnauthenticatedRequest() throws Exception {
+        mockMvc.perform(get("/api/groups"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("a user outside the group cannot view its balances")
+    void rejectsNonMemberAccess() throws Exception {
+        String groupJson = mockMvc.perform(post("/api/groups")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateGroupRequest("Private Group"))))
+                .andReturn().getResponse().getContentAsString();
+        Long groupId = objectMapper.readTree(groupJson).get("id").asLong();
+
+        // Bob was never added to this group.
+        mockMvc.perform(get("/api/groups/{id}/balances", groupId)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("registering the same email twice is rejected with 409")
+    void rejectsDuplicateRegistration() throws Exception {
+        String email = "duplicate@gmail.com";
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new dev.fahim.blncr.dto.RegisterRequest("First", email, "password123"))))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new dev.fahim.blncr.dto.RegisterRequest("Second", email, "password123"))))
+                .andExpect(status().isConflict());
+    }
+
+    private String register(String name, String email, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new dev.fahim.blncr.dto.RegisterRequest(name, email, password))))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return result.getResponse().getContentAsString();
+    }
+}

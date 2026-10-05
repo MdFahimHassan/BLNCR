@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# The workflow only needs to read the repo. Without this, GITHUB_TOKEN gets broader default rights.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Make mvnw executable
+        # git doesn't always preserve the executable bit on mvnw depending on how the
+        # repo was created/transferred — set it explicitly instead of trusting file mode.
+        run: chmod +x mvnw
+
+      - name: Run tests
+        # Tests run against the "test" Spring profile (H2, see
+        # src/test/resources/application-test.properties) — no Postgres
+        # container or secrets needed in CI.
+        run: ./mvnw -B test
+
+      - name: Build jar
+        run: ./mvnw -B clean package -DskipTests
+
+      - name: Build backend Docker image
+        run: docker build -t blncr-backend:ci .
+
+  frontend:
+    name: Frontend (lint + test + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit production dependencies for known vulnerabilities
+        # Fails the build on any HIGH/CRITICAL advisory in packages that ship to users.
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          if-no-files-found: error
+
+      - name: Build
+        # A placeholder API URL is enough — this only verifies the production
+        # build compiles, it doesn't call the API.
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: https://placeholder.invalid
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend for end-to-end tests
+        working-directory: .
+        run: |
+          docker compose up -d --build backend
+
+          echo "Waiting for backend..."
+
+          for i in {1..60}; do
+            if curl -fsS http://localhost:9090/actuator/health > /dev/null; then
+              echo "Backend is ready!"
+              exit 0
+            fi
+
+            echo "Backend not ready yet. Attempt $i/60"
+            sleep 2
+          done
+
+          echo "Backend failed to become healthy."
+          docker compose logs backend
+          exit 1
+        env:
+          DB_PASSWORD: ci-e2e-only-password
+          JWT_SECRET: dGVzdC1vbmx5LXNlY3JldC1rZXktZm9yLWJsbmNyLWp1bml0LXRlc3RzLTEyMzQ1Ng==
+          CORS_ALLOWED_ORIGINS: http://127.0.0.1:5173,http://localhost:5173
+          EMAIL_MX_CHECK: false
+
+      - name: Run browser end-to-end flow
+        run: npm run test:e2e
+        env:
+          VITE_API_BASE_URL: http://localhost:9090
+
+      - name: Stop backend services
+        if: always()
+        working-directory: .
+        run: docker compose down
+        env:
+          DB_PASSWORD: ci-e2e-only-password
+          JWT_SECRET: dGVzdC1vbmx5LXNlY3JldC1rZXktZm9yLWJsbmNyLWp1bml0LXRlc3RzLTEyMzQ1Ng==

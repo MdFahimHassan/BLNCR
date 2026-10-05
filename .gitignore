@@ -1,0 +1,62 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Docker / secrets ###
+# Real env files with secrets are never committed — only the .env.example templates are.
+# Every .env at any depth is ignored; copy frontend/.env.example to frontend/.env locally.
+.env
+.env.*
+!.env.example
+!frontend/.env.example
+
+# Private keys / certificates / keystores / credential dumps
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+credentials.json
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+
+# Generated demo recording (the converted docs/demo.gif is the committed asset)
+docs/demo.webm
+docs/.video-tmp/
