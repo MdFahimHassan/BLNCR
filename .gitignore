@@ -60,3 +60,5 @@ frontend/playwright-report/
 # Generated demo recording (the converted docs/demo.gif is the committed asset)
 docs/demo.webm
 docs/.video-tmp/
+# Database dumps (contain user data - never commit)
+*.dump

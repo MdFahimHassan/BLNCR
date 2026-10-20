@@ -323,7 +323,7 @@ export default function LandingPage() {
               badge="No install"
               bullets={[
                 <>
-                  Deployed on <code className="feature-code">Railway</code> (API) + <code className="feature-code">Vercel</code> (frontend)
+                  Deployed on <code className="feature-code">Render</code> (API) + <code className="feature-code">Neon</code> (Postgres) + <code className="feature-code">Vercel</code> (frontend)
                 </>,
                 <>
                   Real managed Postgres, real <code className="feature-code">JWT</code> auth

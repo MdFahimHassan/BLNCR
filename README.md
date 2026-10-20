@@ -8,13 +8,15 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=0a0b0d)](#tech-stack)
 [![License: MIT](https://img.shields.io/badge/License-MIT-d7ff3e)](LICENSE)
 
-**Live app:** [blncr-xi.vercel.app](https://blncr-xi.vercel.app/) · **API:** [blncr-production.up.railway.app](https://blncr-production.up.railway.app/)
+**Live app:** [blncr-xi.vercel.app](https://blncr-xi.vercel.app/) · **API health:** [blncr.onrender.com](https://blncr.onrender.com/actuator/health/readiness)
+
+> **Note:** the backend runs on a free hosting tier. If nobody has used the app for a while, the first request can take 30–50 seconds while the server wakes up. After that it responds normally.
 
 ---
 
 ## The problem
 
-Splitting shared expenses is easy to track and hard to *settle*. A trip with five people and thirty expenses doesn't produce one debt — it produces a tangled web of small IOUs, and untangling it by hand is where every spreadsheet-based tracker gives up. Most expense splitters stop at listing who owes what. BLNCR treats the group's debts as a graph and uses a greedy heuristic to produce a compact payment plan that zeros everyone out. It often reduces the number of payments, but doesn't guarantee the mathematical minimum.
+Splitting shared expenses is easy to track and hard to *settle*. A trip with five people and thirty expenses doesn't produce one debt rather it produces a tangled web of small IOUs, and untangling it by hand is where every spreadsheet based tracker gives up. Most expense splitters stop at listing who owes what. BLNCR treats the group's debts as a graph and uses a greedy heuristic to produce a compact payment plan that zeros everyone out. It often reduces the number of payments, but doesn't guarantee the mathematical minimum.
 
 ## Demo
 
@@ -22,7 +24,7 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
   <img src="docs/demo.gif" alt="BLNCR walkthrough: open a group, add an expense, review balances and settle up" width="85%">
 </p>
 
-[▶ Try the live app](https://blncr-xi.vercel.app/): fastest way to see it working end to end. If the API has been idle, the first request can be slow while the container wakes up (depends on the hosting tier).
+[Try the live app](https://blncr-xi.vercel.app/): fastest way to see it working end to end. If the API has been idle, the first request can be slow while the container wakes up (depends on the hosting tier).
 
 <p align="center">
   <img src="docs/screenshots/03-balances.png" alt="Net balances per member and the suggested settle-up plan" width="100%"><br>
@@ -58,7 +60,7 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 - **Edit and delete expenses** (by the creator or a group admin), with search, category filter and paging in the UI
 - **Balances and debt simplification**: net position per member plus a greedy heuristic that produces a compact settle-up plan; it does not guarantee the mathematical minimum
 - **Settlements and activity feed**: record a payment you were part of, and keep a running history
-- **Precise financial math**: every monetary value is a `BigDecimal`, split in integer cents, never a `float`/`double`
+- **Precise financial math**: every monetary value is a BigDecimal, split in integer cents, never a float/double
 - **Multi-currency groups**: pick one of 20 currencies per group
 
 **Groups and accounts**
@@ -68,7 +70,7 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 - **Profile and privacy**: avatar upload (JPEG/PNG/WebP, magic-byte checked), edit profile, and account deletion that anonymizes the user while keeping group ledgers intact
 
 **Engineering**
-- **Idempotent writes**: expense creation takes an `Idempotency-Key`, so a double-click or flaky retry can't create a duplicate
+- **Idempotent writes**: expense creation takes an Idempotency-Key, so a double click or flaky retry can't create a duplicate
 - **Correct time handling**: timestamps are UTC instants (`TIMESTAMPTZ`), shown in each viewer's local time
 - **Operations-ready API**: liveness/readiness probes, request IDs, structured JSON logs, optional Sentry error tracking, and OpenAPI docs
 
@@ -82,7 +84,7 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 | **Frontend** | React 19 · Vite · React Router 7 · Tailwind CSS v4 · Axios |
 | **Testing** | JUnit 5 · Mockito · AssertJ · `@DataJpaTest` / `@WebMvcTest` / `@SpringBootTest` (H2) · Testcontainers (real Postgres) · Vitest + Testing Library · Playwright (end-to-end) |
 | **Observability** | Spring Actuator probes · request-ID logging · Sentry (opt-in) · springdoc OpenAPI |
-| **Infra** | Docker (multi-stage build) · Docker Compose · GitHub Actions CI · Railway (API + Postgres) · Vercel (frontend) |
+| **Infra** | Docker (multi-stage build) · Docker Compose · GitHub Actions CI · Render (API) · Neon (Postgres) · Vercel (frontend) |
 
 ## Operations and security notes
 
@@ -91,12 +93,12 @@ Splitting shared expenses is easy to track and hard to *settle*. A trip with fiv
 - Set `SENTRY_DSN` in the deployment secret store to enable error reporting. Sentry is disabled when no DSN is configured and `send-default-pii` is off.
 - The browser stores JWTs in `localStorage`, which is convenient for this standalone SPA but makes script injection a token-theft risk. The API's restrictive CSP and lack of third-party scripts reduce exposure, but do not make browser storage equivalent to an `HttpOnly` cookie.
 - Login throttling and token revocation are in-memory and single-instance only; counters reset on restart and revocations do not synchronize across replicas. Use a shared store (such as Redis) or edge rate limiting before horizontal scaling.
-- API docs are available at `/swagger-ui.html` and `/v3/api-docs`.
+- API docs are available at `/swagger-ui.html` and `/v3/api-docs` when running locally. They are switched off on the hosted deployment (`SPRINGDOC_API_DOCS_ENABLED=false`, `SPRINGDOC_SWAGGER_UI_ENABLED=false`).
 
 ## Architecture
 
 <p align="center">
-  <img src="docs/architecture.svg" alt="BLNCR system architecture — React frontend on Vercel talking JWT-secured REST to a layered Spring Boot API on Railway, backed by a Flyway-migrated Postgres database, with GitHub Actions CI gating both deploys" width="100%">
+  <img src="docs/architecture.svg" alt="BLNCR system architecture — React frontend on Vercel talking JWT-secured REST to a layered Spring Boot API on Render, backed by a Flyway-migrated Postgres database, with GitHub Actions CI gating both deploys" width="100%">
 </p>
 
 The backend follows a strict `controller → service → repository` layering. The two algorithmically interesting pieces — **`SplitCalculator`** (equal/exact/percentage split math) and **`BalanceService`** (net balances + debt simplification) — live entirely in the service layer with no framework or persistence code mixed in, so they're unit-testable in isolation and reusable if the transport layer ever changes (e.g. adding a GraphQL or gRPC front door later).
@@ -107,7 +109,7 @@ The backend follows a strict `controller → service → repository` layering. T
 ```
 ┌─────────────┐      REST/JSON        ┌──────────────────┐      JPA/Hibernate      ┌──────────────┐
 │   React     │ ────────────────────▶ │   Spring Boot     │ ─────────────────────▶ │  PostgreSQL  │
-│  (Vercel)   │ ◀──────────────────── │  API (Railway,    │ ◀───────────────────── │  (Railway    │
+│  (Vercel)   │ ◀──────────────────── │  API (Render,     │ ◀───────────────────── │  (Neon       │
 │             │      Bearer JWT       │   Docker)          │                          │  managed)   │
 └─────────────┘                       └──────────────────┘                          └──────────────┘
        ▲                                        ▲
@@ -119,12 +121,12 @@ The backend follows a strict `controller → service → repository` layering. T
 
 ## Key design decisions
 
-- **`BigDecimal`, split in integer cents — never `float`/`double`.** Floating-point division doesn't distribute cleanly (splitting $100 three ways is the classic failure case). `SplitCalculator` converts to cents, does integer division, and distributes any leftover cent by the **largest-remainder method** so splits always sum back exactly to the total and cents go to the largest fractional share rather than whoever's listed first.
-- **Debt simplification is a deliberate, named trade-off.** True minimum-transaction debt netting is NP-hard in the general case. `BalanceService` uses the standard greedy heuristic — repeatedly matching the largest creditor with the largest debtor — which isn't provably optimal for every input but produces a short, clean settle-up plan in practice and is the accepted approach for a project at this scope.
+- **Big-Decimal, split in integer cents but never float/double.** Floating point division doesn't distribute cleanly (splitting $100 three ways is the classic failure case). **SplitCalculator** converts to cents, does integer division, and distributes any leftover cent by the **largest-remainder method** so splits always sum back exactly to the total and cents go to the largest fractional share rather than whoever's listed first.
+- **Debt simplification is a deliberate, named trade-off.** True minimum-transaction debt netting is NP-hard in the general case. `BalanceService` uses the standard greedy heuristic that repeatedly matches the largest creditor with the largest debtor which isn't provably optimal for every input but produces a short, clean settle-up plan in practice and is the accepted approach for a project at this scope.
 - **JWT over server-side sessions.** A stateless token fits a REST API consumed by a fully decoupled SPA, and avoids pinning the backend to sticky sessions if it's ever scaled horizontally.
-- **Layered architecture, with a shared `GroupAccessService`.** Every group-scoped endpoint (expenses, balances, settlements, activity) needs the same "does this group exist, is this user a member" check; factoring it out once meant four services stayed thin instead of repeating that guard clause.
-- **Flyway over `ddl-auto=update`, and specifically `spring-boot-starter-flyway`.** Versioned SQL migrations are reviewable and reversible in a way Hibernate's auto-DDL isn't. Worth noting for anyone hitting the same wall: on Spring Boot 4, the plain `flyway-core` + `flyway-database-postgresql` combo (correct on Boot 3.x) compiles fine but never actually runs — Boot 4 moved Flyway's autoconfiguration into `spring-boot-starter-flyway`, and without it migrations silently don't fire while `ddl-auto=validate` fails against an empty schema with no error pointing at the real cause.
-- **Secrets are environment-only.** `JWT_SECRET` has no fallback anywhere in the codebase — the app fails fast on boot if it isn't set, rather than quietly running with a checked-in default.
+- **Layered architecture, with a shared Group-Access-Service.** Every group scoped endpoint (expenses, balances, settlements, activity) needs the same "does this group exist, is this user a member" check; factoring it out once meant four services stayed thin instead of repeating that guard clause.
+- **Flyway over `ddl-auto=update`, and specifically `spring-boot-starter-flyway`.** Versioned SQL migrations are reviewable and reversible in a way Hibernate's auto-DDL isn't. Worth noting for anyone hitting the same wall: on Spring Boot 4, the plain `flyway-core` + `flyway-database-postgresql` combo (correct on Boot 3.x) compiles fine but never actually runs rather Boot 4 moved Flyway's autoconfiguration into `spring-boot-starter-flyway`, and without it migrations silently don't fire while `ddl-auto=validate` fails against an empty schema with no error pointing at the real cause.
+- **Secrets are environment-only.** `JWT_SECRET` has no fallback anywhere in the codebase so the app fails fast on boot if it isn't set, rather than quietly running with a checked-in default.
 
 ## Getting started
 
@@ -204,12 +206,10 @@ These are deliberate scope decisions, listed so they're not surprises:
 - [x] React frontend (Vite + Tailwind)
 - [x] Automated tests at every layer (unit, repository, integration, Postgres/Testcontainers, component, browser end-to-end)
 - [x] Dockerized backend + Postgres, Flyway migrations, GitHub Actions CI
-- [x] Live deploy: Railway (backend + managed Postgres) and Vercel (frontend)
+- [x] Live deploy: Render (backend), Neon (managed Postgres) and Vercel (frontend)
 - [x] Product depth: invites, roles, edit/delete, categories, multi-currency, profile and account deletion
 - [x] Production hygiene: health probes, request IDs, structured logs, Sentry, OpenAPI
 - [ ] Custom domain *(optional)*
-
-See [`docs/PROJECT_WRITEUP.md`](docs/PROJECT_WRITEUP.md) for a portfolio-ready write-up of this project.
 
 ## License
 

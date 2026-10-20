@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ServerWakingBanner from "./components/ServerWakingBanner";
 // LandingPage is a static import so "/" never waits on a chunk; everything else is lazy-loaded.
 import LandingPage from "./pages/LandingPage";
 
@@ -95,6 +96,7 @@ export default function App() {
     <ToastProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ServerWakingBanner />
           <AppRoutes />
         </BrowserRouter>
       </AuthProvider>

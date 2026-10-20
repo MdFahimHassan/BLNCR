@@ -35,9 +35,10 @@ We use the data above only to:
 
 ## 4. Where your data lives
 
-- Your data is stored in a managed PostgreSQL database hosted on **Railway**.
+- Your data is stored in a managed PostgreSQL database hosted on **Neon**.
+- The API server runs on **Render**.
 - The frontend is hosted on **Vercel**.
-- Both are infrastructure providers — they host the app, they don't independently access or use your data for their own purposes.
+- These are infrastructure providers — they host the app, they don't independently access or use your data for their own purposes.
 
 Login sessions are kept using a JSON Web Token (JWT) stored in your browser's `localStorage`, not a tracking cookie. It's used only to keep you signed in and is removed when you log out or when it expires.
 

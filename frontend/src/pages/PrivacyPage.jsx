@@ -69,11 +69,12 @@ export default function PrivacyPage() {
 
       <H2>4. Where your data lives</H2>
       <ul className="ml-5 flex list-disc flex-col gap-2">
-        <li>Your data is stored in a managed PostgreSQL database hosted on Railway.</li>
+        <li>Your data is stored in a managed PostgreSQL database hosted on Neon.</li>
+        <li>The API server runs on Render.</li>
         <li>The frontend is hosted on Vercel.</li>
       </ul>
       <p>
-        Both are infrastructure providers — they host the app, they don't independently access or use
+        These are infrastructure providers — they host the app, they don't independently access or use
         your data for their own purposes.
       </p>
       <p>

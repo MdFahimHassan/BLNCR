@@ -7,10 +7,10 @@
 ## Short version (project card)
 
 **BLNCR — Group Expense Splitter**
-A Splitwise-style expense splitter with a greedy debt-simplification heuristic that turns a group's tangled IOUs into a compact payment plan. It often reduces the payment count but does not guarantee the mathematical minimum. Full-stack: Spring Boot + PostgreSQL API, React + Tailwind frontend, JWT auth, Dockerized and deployed on Railway/Vercel with CI on every push.
+A Splitwise-style expense splitter with a greedy debt-simplification heuristic that turns a group's tangled IOUs into a compact payment plan. It often reduces the payment count but does not guarantee the mathematical minimum. Full-stack: Spring Boot + PostgreSQL API, React + Tailwind frontend, JWT auth, Dockerized and deployed on Render/Neon/Vercel with CI on every push.
 
 **Stack:** Java 21 · Spring Boot · PostgreSQL · React · Tailwind · Docker · GitHub Actions · Testcontainers · Playwright
-**Links:** [Live app](https://blncr-xi.vercel.app/) · [API](https://blncr-production.up.railway.app/) · [Source](https://github.com/MdFahimHassan/BLNCR)
+**Links:** [Live app](https://blncr-xi.vercel.app/) · [API health](https://blncr.onrender.com/actuator/health/readiness) · [Source](https://github.com/MdFahimHassan/BLNCR)
 
 The SPA keeps its bearer JWT in `localStorage`. This is a deliberate trade-off: the restrictive API CSP and absence of third-party scripts reduce script-injection exposure, but a successful XSS could still read browser storage. Login throttling and revocation are in-memory and are therefore single-instance protections, not shared controls for horizontal deployments.
 
@@ -42,7 +42,7 @@ I wanted a first portfolio project with genuine algorithmic depth rather than an
 - **CI/CD.** GitHub Actions runs backend tests, frontend lint and tests with coverage, the Docker build, and the browser end-to-end flow against the containerized API on every push, so a broken build never reaches deploy.
 - **Infrastructure as config, not hardcoding.** Docker + Docker Compose for a one-command local environment (backend + Postgres, no local installs needed); Flyway for versioned schema migrations instead of letting Hibernate auto-alter the schema; every secret (`JWT_SECRET`, DB credentials, CORS origins) supplied via environment variables with no working fallback baked into the code.
 - **Observability.** Health and readiness probes, an `X-Request-ID` on every response that also appears in structured JSON logs, opt-in Sentry error reporting, and OpenAPI docs.
-- **Deployed and live**, not just running locally: Railway (API + managed Postgres) and Vercel (frontend), verified end-to-end against the real deployed stack, not just `localhost`.
+- **Deployed and live**, not just running locally: Render (API), Neon (managed Postgres) and Vercel (frontend), verified end-to-end against the real deployed stack, not just `localhost`.
 
 ### Known limits and what I'd do next
 
